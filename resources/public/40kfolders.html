@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+	<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+  <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <!-- Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>    
+  <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <!-- FONTAWESOME -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+  <!-- jquery QTIPs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.js"></script>
+ 
+  <!-- TAFFYdb -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/taffydb/2.7.2/taffy-min.js"></script>
+		<link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
+	<style>
+		body { font-family: 'Exo 2', sans-serif; }
+		#folderpages td { 
+			width: 33%; 
+			position: relative;
+			text-align: center;
+		}
+		.footer	{
+			font-size: 0.8em;
+			position: absolute;
+			bottom: 	0;
+			right:	0;
+		}
+		.card{
+			width: 200px;
+		}
+		.folders	{
+			position:	sticky !important;
+			top:	0px;
+		}
+		.icon-loyal { color: slateblue; }
+		.icon-sig   { color: gold; }
+	</style>
+	
+	
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-4">
+				<h2>Packs</h2>
+				<div id="packlist">
+				</div>
+			</div>
+			<div class="col-sm-8 folders">
+				<div class="row d-flex justify-content-between">
+					<div>
+						<h2>Virtual Folders</h2>
+					</div>
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="showimg" value>
+						<label class="form-check-label">Show Card Images</label>
+					</div>
+				</div>
+				<div class="row">
+					<div id="foldersections"></div>
+				</div>
+				<div class="row d-flex justify-content-around">
+					<button class="btn btn-primary" id="pageprev"><i class="fas fa-chevron-left"></i> Previous</button>
+					<button class="btn btn-primary" id="pagenext"><i class="fas fa-chevron-right"></i> Next</button>
+				</div>
+				<div class="row justify-content-center align-items-center" id="folderpages"></div>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script>
+	var pagenum = 0;
+	var section = [];
+	var factions = [];
+	var pages = [];
+	
+	$(document).ready(function () {
+		var _cycles;
+		var _packs;
+		var _cards;
+		
+		var imageUrlTemplate;
+		
+		var outp = '';
+		var checked = false;
+		var _factions;
+		var _types;
+		
+		var filter_pack = [];
+		var faction_code;
+		
+		
+		// LOAD DATA
+		$.getJSON('js/wh40kconq_cycles.json', function (data) {
+			_cycles = TAFFY(data);			//console.log (data);
+			$.getJSON('js/wh40kconq_packs.json', function (data) {
+				_packs = TAFFY(data);			//console.log(data);
+				$.getJSON('js/wh40k_factions.json', function (data) {
+					_factions = TAFFY(data.data);	// NOTE: data.data
+					$.getJSON('js/wh40k_types.json', function (data) {
+						_types = TAFFY(data.data);	// NOTE: data.data
+						$.getJSON('js/wh40kconq_all_out.json', function (data) {
+							_cards = TAFFY(data);	//console.log(data);
+							
+							
+							// PACKS Checklist
+							_cycles().order("position").each( function (cycle) {
+								indent = false;
+								cyclepacks = _packs({"cycle_code":cycle.code}).select("code");
+								_packs({"cycle_code":cycle.code}).order("position").each( function (pack,idx) {
+																
+									if (cycle.name != pack.name && idx == 0) {
+										indent = true;
+										outp += '<div class="form-check pa">'
+											+ '<input class="form-check-input cycle" type="checkbox" data-cycle="' + pack.cycle_code + '" checked="checked">'
+											+ '<label class="form-check-label"><b>'
+											+ cycle.name
+											+ '</b></label></div>';
+											outp += '<ul>';
+									}
+									outp += '<div class="form-check ch">'
+										+ '<input class="form-check-input pack" type="checkbox" data-code="' + pack.code + '" data-cycle="' + pack.cycle_code + '" checked="checked">'
+										+ '<label class="form-check-label">'
+										+ (cycle.name == pack.name ? '<b>' : '') 
+										+ pack.name 
+										+ (cycle.name == pack.name ? '</b>' : '')
+										+ ' (' + _cards({"pack_code":pack.code}).sum("quantity") + ')'
+										+ '</label></div>';
+								});
+								if (indent == true)	{
+									outp += '</ul>';
+								}
+							});
+							$('#packlist').html (outp);
+							
+							// Set PACKS Checkboxes
+							if (typeof(Storage) !== "undefined")	{
+								_packs().order("position").each( function (pack,idx) {
+									// get localstorage value
+									checked = localStorage.getItem("whk-pack-" + pack.code) == null ? true : localStorage.getItem("whk-pack-" + pack.code) == "true";
+									// un-check child and parent
+									if (checked == false)	{
+										$('#packlist').find('input[data-code="' + pack.code + '"]').prop("checked",checked);
+										$('#packlist').find('input.cycle[data-cycle="' + pack.cycle_code + '"]').prop("checked",checked);
+									}
+								});
+							}
+							
+							// Initialise Pack filter for list of cards
+							faction_code = 'space_marines';
+							set_filter_pack();
+							// PACKS :: END
+											
+							// FACTIONS Breadcrumb Nav
+							outp = '<ol class="breadcrumb bg-light">';
+							_factions().each( function (faction, idx)	{	//.order("side_code,name")
+								outp += '<li data-faction="' + faction.code + '" class="breadcrumb-item"><a href="#" style="color: ' + faction.color + '">' + faction.name + '</a></li>';
+							});
+							outp += '</ol>';
+							
+							$('#foldersections').html(outp);
+							
+							updateFolder()
+							
+						});
+					});
+				});
+			});
+		});
+		
+		// Data Pack Filter: filter_pack
+		function set_filter_pack()	{
+			filter_pack = [];
+			_packs().order("position").each( function (pack) {
+				if (typeof(Storage) !== "undefined") {
+					if (localStorage.getItem("whk-pack-" + pack.code) == null || localStorage.getItem("whk-pack-" + pack.code) == "true") {
+						filter_pack.push(pack.code);
+					}
+				} else {
+					filter_pack.push(pack.code)
+				}
+			});
+			updateFolder();
+		}
+		
+		function updateFolder()	{
+			pages = [];
+			
+			_types({"code":{"!is":"token"}}).order("position").each(function (type)	{
+				if (type.name == "Warlord Unit"){
+					_cards({"faction_code":faction_code,"type":type.name,"pack_code":filter_pack}).each(function (warlord) {
+						pages.push (warlord);
+						//pages.push ($.extend(warlord, {"text":"Bloodied"}));
+						pages.push({"title":"-"});
+						pages.push({"title":"-"});
+						pages = pages.concat(_cards({"signature_squad":warlord.signature_squad,"type_code":{"!is":"warlord_unit"}}).order("position").get());
+						
+						while (pages.length % 9 != 0) { pages.push({"title":"-"}); }
+					});
+				} else {
+					_cards({"faction_code":faction_code,
+									 "type":type.name,
+									 "pack_code":filter_pack}).order("name").each (function (card) {
+							if (card.signature_loyal != "Signature") {pages.push (card)}
+						});
+					//pages = pages.concat(_cards({"faction_code":faction_code,
+					//														 "type":type.name,
+					//														 "pack_code":filter_pack}).order("name").get());
+					// TODO remove Signature Cards
+				}
+				// Fill page with empty slots
+				if (_cards({"faction_code":faction_code,"pack_code":filter_pack}).count() > 9) {
+					while (pages.length % 9 != 0) { pages.push({"title":"-"}); }
+				}
+			});
+			while (pages.length % 9 != 0) { pages.push({"title":"-"}); }
+			drawpage();
+		}
+		
+		function drawpage()	{
+			var pagecount = (pages.length/9);
+			var outp = '';
+			var id;
+			
+			pagenum = Math.max(0,pagenum);
+			pagenum = Math.min(pagecount-1,pagenum);
+			
+			if (pages.length == 0)	{
+				outp = 'Page 0 of 0';
+			} else {
+				outp = _factions({"code":faction_code}).first().name 
+					+ ' page ' + (pagenum + 1)
+					+ ' of ' + pagecount
+					+ ' :: ' + _types({"code":pages[pagenum*9].type_code}).first().name;
+					
+				outp += '<table class="table">';
+				for (var i=0; i<3; i++)	{
+					outp += '<tr>';
+					for (var x=0; x<3; x++)	{
+						id = (pagenum*9)+(i*3)+x;
+						outp += '<td data-code="' + (id < pages.length ? pages[id].code : '') + '">';
+						if (pages[id].title != "-") {
+							if ($('#showimg').prop('checked'))	{
+								outp += '<div><img class="card" src="' + pages[id].img + '"><div>';
+								pages[id].code
+							} else {
+								outp += '<div>' + pages[id].name + '</div>'
+									+ '<br>'
+									+ '<div class="small d-flex justify-content-between"><div>' 
+									+ (pages[id].signature_loyal == "Loyal" ? '<i class="fas fa-crosshairs icon-loyal"></i>' : '')
+									+ (pages[id].signature_loyal == "Signature" ? '<i class="fas fa-cog icon-sig"></i><span class="text-dark ml-2">x'+ pages[id].quantity + '</span>' : '')
+									+ '</div><div>'
+									+ _cycles({"code":_packs({"code":pages[id].pack_code}).first().cycle_code}).first().name 
+									+ ' #' + parseInt(pages[id].position,10) 
+									+ '</div></div>';
+							}
+						} else {
+							outp += '-';
+						}
+						outp += '</div></td>';
+					}
+					outp += '</tr>';
+				}
+				outp += '</table>';
+			}
+			$('#folderpages').html(outp);
+		}
+		
+// Listeners //
+		$('#foldersections').on('click','li',function () {
+			pagenum = 0;
+			section = factions[$(this).data('faction')];
+			faction_code = $(this).data('faction');
+			updateFolder();
+		});
+		
+		$('#packlist')
+			.on('click','input.pack',function () {
+				localStorage.setItem("whk-pack-" + $(this).data('code'),$(this).prop('checked').toString() );
+				set_filter_pack();
+			})
+		// Parent/child checkboxes
+			.on("click","div.form-check.pa",function()	{
+				var packcode;
+				var checkchild = $(this).find("input[type='checkbox']").prop("checked");
+				var cyclecode = $(this).find("input[type='checkbox']").data("cycle");
+				$(this).parent().find("[data-cycle='" + cyclecode + "']input[type='checkbox'].pack").each(function (id,chkbox)	{
+					$(chkbox).prop("checked",checkchild);
+					packcode = $(chkbox).data('code');
+					localStorage.setItem("whk-pack-" + packcode,checkchild);
+				});
+				set_filter_pack();
+			})
+			.on("click","div.form-check.ch",function()	{
+				var checkpar = $(this).parent().find("input[type='checkbox']:checked").length == $(this).parent().find("input[type='checkbox']").length;
+				var cyclecode = $(this).find("input[type='checkbox']").data("cycle");
+				$(this).parent().parent().find("div.form-check.pa [data-cycle='" + cyclecode + "']input[type='checkbox']").prop("checked",checkpar);
+			});
+		
+		// Folder Page Nav
+		$('#pageprev').on('click',function () {
+			pagenum--;
+			drawpage();
+		});
+		$('#pagenext').on('click',function () {
+			pagenum++;
+			drawpage();
+		});
+		// Show Card Images checkbox
+		$('#showimg').on('change',function() {
+			drawpage();
+		});
+	
+	// card qtip
+		$('#folderpages').on('mouseover','td',function() {
+			var card = _cards({"code":$(this).data('code').toString()}).first();
+			$(this).qtip({
+				overwrite: false,
+				show: {
+					ready: true
+				},
+				content: {
+					text: 
+						'<div><h4>' + card.name + '</h4></div>'
+						+ '<div>' +  card.text + '</div>'
+						+ '<br><div class="footer">' 
+						+ _cycles({"code":_packs({"code":card.pack_code}).first().cycle_code}).first().name
+						+ ' - '							 
+						+ _packs({"code":card.pack_code}).first().name + ' #' + parseInt(card.position,10) + '</div>'
+				},
+				style: {
+					classes: 'qtip-bootstrap',
+					tip: false
+				},
+				position: {
+					my: 'left center',
+					at: 'right center'
+				},
+				hide:	{
+					//event: 'unfocus'
+				}
+			});
+		});
+	});
+
+</script>
+
+	
+</html>
