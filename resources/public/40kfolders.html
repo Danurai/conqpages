@@ -20,62 +20,41 @@
   <!-- TAFFYdb -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/taffydb/2.7.2/taffy-min.js"></script>
 		<link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
-	<style>
-		body { font-family: 'Exo 2', sans-serif; }
-		#folderpages td { 
-			width: 33%; 
-			position: relative;
-			text-align: center;
-		}
-		.footer	{
-			font-size: 0.8em;
-			position: absolute;
-			bottom: 	0;
-			right:	0;
-		}
-		.card{
-			width: 200px;
-		}
-		.folders	{
-			position:	sticky !important;
-			top:	0px;
-		}
-		.icon-loyal { color: slateblue; }
-		.icon-sig   { color: gold; }
-	</style>
+
+  <!-- App Files -->
+    <link rel="stylesheet" href="css/style.css">
 	
-	
-</head>
-<body>
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-4">
-				<h2>Packs</h2>
-				<div id="packlist">
-				</div>
-			</div>
-			<div class="col-sm-8 folders">
-				<div class="row d-flex justify-content-between">
-					<div>
-						<h2>Virtual Folders</h2>
-					</div>
-					<div class="form-check">
-						<input class="form-check-input" type="checkbox" id="showimg" value>
-						<label class="form-check-label">Show Card Images</label>
-					</div>
-				</div>
-				<div class="row">
-					<div id="foldersections"></div>
-				</div>
-				<div class="row d-flex justify-content-around">
-					<button class="btn btn-primary" id="pageprev"><i class="fas fa-chevron-left"></i> Previous</button>
-					<button class="btn btn-primary" id="pagenext"><i class="fas fa-chevron-right"></i> Next</button>
-				</div>
-				<div class="row justify-content-center align-items-center" id="folderpages"></div>
-			</div>
-		</div>
-	</div>
-</body>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-4">
+          <h2>Packs</h2>
+          <div id="packlist">
+          </div>
+        </div>
+        <div class="col-sm-8 folders">
+          <div class="row d-flex justify-content-between">
+            <div>
+              <h2>Virtual Folders</h2>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="showimg" value>
+              <label class="form-check-label">Show Card Images</label>
+            </div>
+          </div>
+          <div class="row">
+            <div id="foldersections"></div>
+          </div>
+          <div class="row d-flex justify-content-around">
+            <button class="btn btn-primary" id="pageprev"><i class="fas fa-chevron-left"></i> Previous</button>
+            <button class="btn btn-primary" id="pagenext"><i class="fas fa-chevron-right"></i> Next</button>
+          </div>
+          <div class="row justify-content-center align-items-center" id="folderpages"></div>
+        </div>
+      </div>
+    </div>
+  </body>
 
 <script>
 	var pagenum = 0;
@@ -100,16 +79,16 @@
 		
 		
 		// LOAD DATA
-		$.getJSON('js/wh40kconq_cycles.json', function (data) {
-			_cycles = TAFFY(data);			//console.log (data);
-			$.getJSON('js/wh40kconq_packs.json', function (data) {
-				_packs = TAFFY(data);			//console.log(data);
-				$.getJSON('js/wh40k_factions.json', function (data) {
+		$.getJSON('js/data/wh40k_cycles.json',{_: new Date().getTime()}, function (data) {
+			_cycles = TAFFY(data.data);			//console.log (data.data);
+			$.getJSON('js/data/wh40k_packs.json',{_: new Date().getTime()}, function (data) {
+				_packs = TAFFY(data.data);			//console.log(data.data);
+				$.getJSON('js/data/wh40k_factions.json',{_: new Date().getTime()}, function (data) {
 					_factions = TAFFY(data.data);	// NOTE: data.data
-					$.getJSON('js/wh40k_types.json', function (data) {
+					$.getJSON('js/data/wh40k_types.json',{_: new Date().getTime()}, function (data) {
 						_types = TAFFY(data.data);	// NOTE: data.data
-						$.getJSON('js/wh40kconq_all_out.json', function (data) {
-							_cards = TAFFY(data);	//console.log(data);
+						$.getJSON('js/data/wh40k_cards.json',{_: new Date().getTime()}, function (data) {
+							_cards = TAFFY(data.data);	//console.log(data);
 							
 							
 							// PACKS Checklist
@@ -250,7 +229,7 @@
 						outp += '<td data-code="' + (id < pages.length ? pages[id].code : '') + '">';
 						if (pages[id].title != "-") {
 							if ($('#showimg').prop('checked'))	{
-								outp += '<div><img class="card" src="' + pages[id].img + '"><div>';
+								outp += '<div><img class="cardimg" src="' + pages[id].img + '"><div>';
 								pages[id].code
 							} else {
 								outp += '<div>' + pages[id].name + '</div>'

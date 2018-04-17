@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+  <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <!-- Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>    
+  <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <!-- FONTAWESOME -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+  <!-- jquery QTIPs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.js"></script>
+ 
+  <!-- TAFFYdb -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/taffydb/2.7.2/taffy-min.js"></script>
+    
+  <!-- App Files -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script type="text/javascript">
+      $(document).ready(function () {
+        var _data;
+        var _cycles;
+        var _packs;
+        var outp = '';
+        var factionfilter = [];
+        var typefilter = [];
+        var packfilter = [];
+        
+        $.getJSON('js/data/wh40k_cards.json',{_: new Date().getTime()},function (data) {
+          _data = TAFFY(data.data);
+          $.getJSON('js/data/wh40k_cycles.json',{_: new Date().getTime()},function (data) {  //$.getJSON('js/wh40k_cycles.json',{_: new Date().getTime()},function (data) {
+            _cycles = TAFFY(data.data);
+            $.getJSON('js/data/wh40k_packs.json',{_: new Date().getTime()},function (data) {
+              _packs = TAFFY(data.data);
+              
+              outp = '<ul class="list-group">';
+              _cycles().order("position").each( function (cycle)  {
+                outp += '<button class="list-group-item" data-cycle="' + cycle.name + '">' + cycle.name + '</button>';
+                _packs({"cycle":cycle.name}).order("position").each(function (pack) {
+                  outp += '<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" '
+                        + 'data-pack="' + pack.name + '">'
+                        + pack.name
+                        + '<span class="badge badge-primary badge-pill">'
+                        + _data({"pack":pack.name}).sum("quantity")
+                        + '</span></button>';
+                });
+              });
+              outp += '</ul>';
+              $('#packs').html (outp);
+        
+            });
+          });
+        });
+        
+        $('#packs').on('click','button',function () {
+        
+          $('#packs button').removeClass('active');
+          $(this).addClass('active');
+          
+          if (typeof $(this).data("cycle") == 'undefined') {
+            packfilter = $(this).data("pack");
+          } else {
+            packfilter = _packs({"cycle":$(this).data("cycle")}).select("name")
+          }
+          update_cardlist();
+        });
+        
+        $('#factionfilter').on('change','label',function ()  {
+          var fac = $(this).data('faction');
+          var facpos = $.inArray(fac,factionfilter);
+          (facpos == -1
+            ? factionfilter.push(fac)
+            : factionfilter.splice(facpos,1) )
+          update_cardlist();
+        });
+        
+        $('#typefilter').on('change','label',function ()  {
+          var type = $(this).data('type');
+          var typepos = $.inArray(type,typefilter);
+          (typepos == -1
+            ? typefilter.push(type)
+            : typefilter.splice(typepos,1) )
+          update_cardlist();
+        });
+        
+        function update_cardlist () {         
+          var allfilter = {};
+          
+          if (factionfilter.length != 0)  {
+            allfilter = $.extend(allfilter,{"faction":factionfilter});
+          }
+          if (typefilter.length != 0)  {
+            allfilter = $.extend(allfilter,{"type":typefilter});
+          }
+          allfilter = $.extend(allfilter,{"pack":packfilter});
+          
+          $('#cards').empty();
+          _data(allfilter).order("position").each(function (card)  {
+            $('#cards').append(cardrow(card));
+          });
+        };
+        
+        function cardrow(card) {
+          var outp;
+          outp = '<tr>'
+            + '<td>#' + parseInt(card.position,10) + '</td>'
+            + '<td class="tt" data-code="' + card.code + '">' + card.name + '</td>'
+            + '<td>' + card.type + '</td>'
+            + '<td>' + (typeof card.faction == 'undefined' ? "" : card.faction) + '</td>';
+          switch (card.signature_loyal) {
+            case "Signature":
+              var sigcard = _data({"pack":card.pack,"signature_squad":card.signature_squad,"type":"Warlord Unit"}).first();
+              outp += '<td class="tt" data-code="' + sigcard.code + '"><i class="fas fa-cog icon-sig"></i>&nbsp;' + sigcard.name + '</td>';
+              break;
+            case "Loyal":
+              outp += '<td><i class="fas fa-crosshairs icon-loyal"></i></td>';
+              break;
+            default:
+              outp += "<td></td>";
+          };
+          outp += '</tr>';
+          return outp;
+         };
+         
+        $('#cards').on('mouseover','.tt',function() {
+          var card = _data({"code":$(this).data("code").toString()}).first();
+          $(this).qtip({
+            overwrite: false,
+            show: {
+              ready: true
+            },
+            content: {
+              text:  '<img src="' + card.img + '" class="cardimg" alt="' + card.name + '"></img>'
+              },
+            style: {
+              classes: 'qtip-bootstrap',
+              tip: false
+            },
+            position: {
+              my: 'right center',
+              at: 'left center'
+            },
+            hide:	{
+              //event: 'unfocus'
+            }
+          });
+          
+        });
+         
+      });
+    
+    </script>
+    
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-4">
+          <div id="packs"></div>
+        </div>
+        <div class="col-sm-8">
+          <div class="row-fluid mb-2">
+            <div id="factionfilter" class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-light" title="Space Marines" data-faction="Space Marines"><input type="checkbox" autocomplete="off">Space Marines</input></label>
+              <label class="btn btn-light" title="Astra Militarum" data-faction="Astra Militarum"><input type="checkbox" autocomplete="off">Astra Militarum</input></label>
+              <label class="btn btn-light" title="Orks" data-faction="Orks"><input type="checkbox" autocomplete="off">Orks</input></label>
+              <label class="btn btn-light" title="Chaos" data-faction="Chaos"><input type="checkbox" autocomplete="off">Chaos</input></label>
+              <label class="btn btn-light" title="Dark Eldar" data-faction="Dark Eldar"><input type="checkbox" autocomplete="off">Dark Eldar</input></label>
+              <label class="btn btn-light" title="Eldar" data-faction="Eldar"><input type="checkbox" autocomplete="off">Eldar</input></label>
+              <label class="btn btn-light" title="Tau" data-faction="Tau"><input type="checkbox" autocomplete="off">Tau</input></label>
+              <label class="btn btn-light" title="Neutral" data-faction="Neutral"><input type="checkbox" autocomplete="off">Neutral</input></label>
+            </div>
+          </div>
+          <div class="row-fluid mb-2">
+            <div id="typefilter" class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-light" title="Warlord Unit" data-type="Warlord Unit"><input type="checkbox" autocomplete="off">Warlord Unit</input></label>
+              <label class="btn btn-light" title="Army Unit" data-type="Army Unit"><input type="checkbox" autocomplete="off">Army Unit</input></label>
+              <label class="btn btn-light" title="Support" data-type="Support"><input type="checkbox" autocomplete="off">Support</input></label>
+              <label class="btn btn-light" title="Event" data-type="Event"><input type="checkbox" autocomplete="off">Event</input></label>
+              <label class="btn btn-light" title="Attachment" data-type="Attachment"><input type="checkbox" autocomplete="off">Attachment</input></label>
+              <label class="btn btn-light" title="Planet" data-type="Planet"><input type="checkbox" autocomplete="off">Planet</input></label>
+              <label class="btn btn-light" title="Token" data-type="Token"><input type="checkbox" autocomplete="off">Token</input></label>
+            </div>
+          </div>
+          <div class="row-fluid">
+            <table class="table">
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Faction</th>
+                <th>Loyal</th>
+              </tr>
+              <tbody id="cards"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+{"data":
+	[{
+		"name": "Warlord Unit",
+		"code": "warlord_unit",
+		"position": 1
+	},{
+		"name": "Army Unit",
+		"code": "army_unit",
+		"position": 2
+	},{
+		"name": "Attachment",
+		"code": "attachment",
+		"position": 3
+	},{
+		"name": "Event",
+		"code": "event",
+		"position": 4
+	},{
+		"name": "Support",
+		"code": "support",
+		"position": 2
+	},{
+		"name": "Synapse Unit",
+		"code": "synapse_unit",
+		"position": 2
+	},{
+		"name": "Planet",
+		"code": "planet",
+		"position": 2
+	},{
+		"name": "Token",
+		"code": "token",
+		"position": 2
+	}
+]}
