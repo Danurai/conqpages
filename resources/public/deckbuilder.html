@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+  <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <!-- Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>    
+  <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <!-- FONTAWESOME -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.10/js/all.js"></script>
+  <!-- jquery QTIPs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.js"></script>
+ 
+  <!-- TAFFYdb -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/taffydb/2.7.2/taffy-min.js"></script>
+    
+  <!-- App Files -->
+		<link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/deckstyle.css">
+    <script src="js/whk_tools.js"></script>
+    <script src="js/whk_qtip.js"></script>
+    <script src="js/whk_deckbuilder.js"></script>
+    
+
+  </head>
+  <body>
+  
+    <nav class="navbar sticky-top navbar-expand-lg navbar-dark" style="background-color: teal;">
+    <!-- Home Decks Collection      Search Login/Logout -->
+      <a class="navbar-brand mb-0 h1" href="/"><i class="fas fa-cog mx-2"></i>Home</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link">Decks</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/folders">Collection</a>
+          </li>
+          <li class="nav-item" disabled>
+            <a class="nav-link" href="#">Litmus</a>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0" >
+          <div class="input-group">
+            <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+            <div class="input-group-append">
+              <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+            </div>
+          </div>
+        </form>
+        <a href="/login" class="nav-item nav-link" title="Login/Logout"><i class="fas fa-user"></i></a>
+      </div>
+    </nav>
+  
+    <div class="container">
+      <div class="row my-2">
+        <div class="col-md decklist">
+          <div class="row">
+            <div class="col" id="decklist">
+            </div>
+          </div>
+          <div class="row">
+            <form class="form-inline" method="POST" action="/decks/save" id="save_form" role="form">
+              <input type="text" id="deck-content" name="deck-content" value="" hidden></input>
+              <input class="form-control" type="text" id="deck-name" name="deck-name" value="New Deck"></input>
+              <button class="btn btn-warning" role="submit">Save Deck</button>
+            </form>
+          </div>
+          <div class="row my-2"><button class="btn btn-danger pull-right" id="newdeck">New Deck</button></div>
+        </div>
+        <div class="col-md">
+          <ul class="nav nav-tabs nav-fill">
+            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#deckbuild">Build</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#deckcheck">Check</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#decksets">Sets</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#deckloader">Load</a></li>
+          </ul>
+          <div class="tab-content mt-2">
+            <div id="deckbuild" class="tab-pane active" role="tabpanel">
+              <div class="row">
+                <div class="col-md">
+                  <input type="text" class="form-control mb-1" placeholder="Filter List" id="filterlist">
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md">
+                  <div class="btn-group btn-group-toggle" data-toggle="buttons" id="factionfilter">
+                    <label class="btn btn-outline-secondary" title="Space Marines"><input type="checkbox" name="space_marines" autocomplete="off">SM</label>
+                    <label class="btn btn-outline-secondary" title="Imperial Guard"><input type="checkbox" name="astra_militarum" autocomplete="off">AM</label>
+                    <label class="btn btn-outline-secondary" title="Orks"><input type="checkbox" name="orks" autocomplete="off">Or</label>
+                    <label class="btn btn-outline-secondary" title="Chaos"><input type="checkbox" name="chaos" autocomplete="off"><i class="fas fa-asterisk"></i></label>
+                    <label class="btn btn-outline-secondary" title="Dark Eldar"><input type="checkbox" name="dark_eldar" autocomplete="off">DE</label>
+                    <label class="btn btn-outline-secondary" title="Eldar"><input type="checkbox" name="eldar" autocomplete="off">El</label>
+                    <label class="btn btn-outline-secondary" title="Tau"><input type="checkbox" name="tau" autocomplete="off"><i class="far fa-circle"></i></label>
+                    <label class="btn btn-outline-secondary" title="Tyranids"><input type="checkbox" name="tyranids" autocomplete="off">Ty</label>
+                    <label class="btn btn-outline-secondary" title="Necrons"><input type="checkbox" name="necrons" autocomplete="off">Ne</label>
+                    <label class="btn btn-outline-secondary" title="Neutral"><input type="checkbox" name="neutral" autocomplete="off"><i class="fas fa-plus"></i></label>
+                  </div>
+                  <div class="btn-group btn-group-toggle" data-toggle="buttons" id="typefilter">
+                    <label class="btn btn-outline-secondary" title="Warlord Unit"><input type="checkbox" name="warlord_unit" autocomplete="off"><i class="fas fa-user-circle"></i></label>
+                    <label class="btn btn-outline-secondary" title="Army Unit"><input type="checkbox" name="army_unit" autocomplete="off"><i class="fas fa-users"></i></label>
+                    <label class="btn btn-outline-secondary" title="Attachment"><input type="checkbox" name="attachment" autocomplete="off"><i class="fas fa-user-plus"></i></label>
+                    <label class="btn btn-outline-secondary" title="Event"><input type="checkbox" name="event" autocomplete="off"><i class="fas fa-bolt"></i></label>
+                    <label class="btn btn-outline-secondary" title="Support"><input type="checkbox" name="support" autocomplete="off"><i class="fas fa-hands-helping"></i></label>
+                    <label class="btn btn-outline-secondary" title="Synapse Unit"><input type="checkbox" name="synapse" autocomplete="off"><i class="fas fa-dna"></i></label>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md">
+                  <table id="cardtbl" class="table table-hover table-sm">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th>Quantity</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Fac.</th>
+                        <th title="Cog"><i class="fas fa-cog"></i></th>
+                        <th title="Command"><i class="fas fa-gavel"></i></th>
+                        <th title="Shields"><i class="fas fa-shield-alt"></i></th>
+                        <th title="Attack"><i class="fas fa-bolt"></i></th>
+                        <th title="HP"><i class="fas fa-heartbeat"></i></th>
+                      </tr>
+                    </thead>
+                    <tbody id="tablebody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div id="deckcheck" class="tab-pane" role="tabpanel">
+              <div class="row justify-content-center my-2">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-light" disabled>Draw:</button>
+                  <button type="button" class="btn btn-sm btn-light btn-draw" val="1" id="draw1">1</button>
+                  <button type="button" class="btn btn-sm btn-light btn-draw" val="2" id="draw2">2</button>
+                  <button type="button" class="btn btn-sm btn-light btn-draw" val="7" id="draw7">7</button>
+                  <button type="button" class="btn btn-sm btn-light btn-draw" val="all" id="drawall">All</button>
+                  <button type="button" class="btn btn-sm btn-light btn-draw" val="0" id="drawreset">Reset</button>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12" align="center">
+                <!-- Sample Draw -->
+                  <div class="row justify-content-between border-bottom border-primary mb-2">
+                    <i class="fas fa-play"></i>
+                    <a href="#hand" data-toggle="collapse">Sample draw</a>
+                  </div>
+                  <div class="collapse show" id="hand"></div>
+                <!-- Planets -->
+                  <div class="row justify-content-between border-bottom border-primary mb-2">
+                    <i class="fas fa-globe"></i>
+                    <a href="#planets" data-toggle="collapse">Planets</a>
+                  </div>
+                  <div class="collapse" id="planets"></div>
+                <!-- Charts -->
+                  <div class="row justify-content-between border-bottom border-primary mb-2">
+                    <i class="fas fa-chart-bar"></i>
+                    <a href="#charts" data-toggle="collapse">Charts</a>
+                  </div>
+                  <div class="collapse" id="charts">
+                    <canvas id="barIcons" width="400" height="400"></canvas>
+                    <canvas id="lineCost" width="400" height="400"></canvas>
+                    <canvas id="lineStr" width="400" height="400"></canvas>
+                    <canvas id="pieFact" width="400" height="400"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="decksets" class="tab-pane" role="tabpanel">
+              <div class="row">
+                <div class="col-md-12 ml-3">
+                  <div id="setlist"></div>
+                </div>
+              </div>
+            </div>
+            <div id="deckloader" class="tab-pane" role="tabpanel">
+                <div class="form-row">
+                  <textarea class="form-control" type="text" id="deckload" rows="20"></textarea>
+                </div>
+                <div class="form-row my-1 float-right">
+                  <button class="btn btn-primary" id="loaddeck">Load</button>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="background-color: #DDD; border-top: black solid 2px; padding: 10px 10px 50px;">
+      <p>Information
+    </div>
+    
+    <div id="cardmodal" class="modal" role="dialog"></div>
+    
+    <div id="snackbar"></div>
+    
+  </body>
+</html>

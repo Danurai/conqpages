@@ -16,7 +16,7 @@
 (defrecord AppRecord []
   component/Lifecycle
   (start [this]
-    (assoc this :server (start-server #'app 8080)))
+    (assoc this :server (start-server #'app 9009)))
   (stop [this]
     (stop-server (:server this))
     (dissoc this :server)))

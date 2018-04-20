@@ -13,55 +13,89 @@ function parsefilter(f)	{
 	var res;
 	var outp = {};
 	
+  var txt = /x:(.+)/;
+  res = RegExp(txt).exec(f);
+  if (res != null) {
+    outp["text"] = {likenocase:res[1]};
+  }
+  
 	var set = /e:(\S+)/;
 	res = RegExp(set).exec(f)
 	if (res !== null)	{
-		outp["setcode"] = {likenocase:res[1].split('|')};
+		outp["pack_code"] = {likenocase:res[1].split('|')};
 	}
 	
 	var faction = /f:(\S+)/;
 	res = RegExp(faction).exec(f)
 	if (res !== null)	{
-		outp["Faction"] = {likenocase:res[1].split('|')};
+		outp["faction_code"] = {likenocase:res[1].split('|')};
 	}
-	
-	var type = /t:(\S+)/;
-	res = RegExp(type).exec(f)
-	if (res !== null)	{
-		outp["Type"] = {likenocase:res[1].split('|')};
-	}
-	
-	var text = /x:(\S+)/;
-	res = RegExp(text).exec(f)
-	if (res !== null)	{
-		outp["CardText"] = {likenocase:res[1].split('|')};
-	}
-	
-	var claim = /c:([0-9])/;
-	res = RegExp(claim).exec(f);
+  
+  var cost = /r(\S)([0-9])/;
+	res = RegExp(cost).exec(f);
 	if (res != null)	{
-		outp["Claim"] = res[1];
+    outp["cost"] = getNumberFilter(res[1],res[2]);
+	}
+  
+  var command_icons = /c(\S)([0-9])/;
+	res = RegExp(command_icons).exec(f);
+	if (res != null)	{
+    outp["command_icons"] = getNumberFilter(res[1],res[2]);
+	}
+  
+  var cost = /a(\S)([0-9])/;
+	res = RegExp(cost).exec(f);
+	if (res != null)	{
+    outp["attack"] = getNumberFilter(res[1],res[2]);
+	}
+  
+  var cost = /h(\S)([0-9])/;
+	res = RegExp(cost).exec(f);
+	if (res != null)	{
+    outp["hp"] = getNumberFilter(res[1],res[2]);
+	}
+  
+  var cost = /c(\S)([0-9])/;
+	res = RegExp(cost).exec(f);
+	if (res != null)	{
+    outp["cost"] = getNumberFilter(res[1],res[2]);
 	}
 	
-	var unique = /u:(true|false)/;
-	res = RegExp(unique).exec(f)
-	if (res != null)	{
-		outp["Unique"] = res[1] == "true";
-	}
-	
-	var loyal = /l:(true|false)/;
-	res = RegExp(loyal).exec(f)
-	if (res != null)	{
-		outp["Loyal"] = res[1] == "true";
-	}
+	//var unique = /u:(true|false)/;
+	//res = RegExp(unique).exec(f)
+	//if (res != null)	{
+	//	outp["Unique"] = res[1] == "true";
+	//}
+	//
+	//var loyal = /l:(true|false)/;
+	//res = RegExp(loyal).exec(f)
+	//if (res != null)	{
+	//	outp["Loyal"] = res[1] == "true";
+	//}
 	
 	if ($.isEmptyObject(outp) && f != "")	{
 		outp["name"] = {likenocase:f.split('|')};
 	}
-	
+  
 	return outp;
 }
 
+function getNumberFilter(op,val)  {
+  var value = parseInt(val,10);
+  var numberFilter = '';
+  switch (op) {
+    case ':':
+      numberFilter = value;
+      break;
+    case '>':
+      numberFilter = {">":value};
+      break;
+    case '<':
+      numberFilter  = {"<":value};
+      break;
+  }
+  return numberFilter;
+}
 
 /* Fisher-Yates Shuffle  */
 function shuffle(array) {

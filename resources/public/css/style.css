@@ -1,121 +1,18 @@
+/* Core Styles */  
+
 body { font-family: 'Exo 2', sans-serif; }
-#folderpages td { 
-  width: 33%; 
-  position: relative;
-  text-align: center;
-}
-.footer	{
-  font-size: 0.8em;
-  position: absolute;
-  bottom: 	0;
-  right:	0;
-}
-.folders	{
-  position:	sticky !important;
-  top:	0px;
-}
-.cardimg    { width: 250px; }
-.qtip       { max-width: 300px !important; }
-.icon-sig   { color: gold; }
-.icon-loyal { color: slateblue; }
+a    { color: darkslategrey; }
 
+.icon-sig                {color: gold;}
+.icon-loyal            {color: slateblue;}
 
-.cardthumb {
-  width: 100px;
-  height: 100px;
-  background-repeat: no-repeat;
-  margin: 2px;
-  background-size: 140px;
-  background-position-x: 80%;
-  background-position-y: 10%;
-  float: right;
-  position: relative;
-}
-
-.cardthumb-army_unit {
-  background-size: 150px;
-  background-position-x: 50%;
-  background-position-y: 20%;
-}
-
-
-.space_marines {
-  color: goldenrod;
-}
-.space_marines-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: goldenrod;
-}
-.astra_militarum {
-  color: darkslategrey;
-}
-.astra_militarum-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: darkslategrey;
-}
-.orks {
-  color: darkgreen;
-}
-.orks-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: darkgreen;
-}
-.chaos {
-  color: darkorange;
-}
-.chaos-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: darkorange;
-}
-.dark_eldar {
-  color: purple;
-}
-.dark_eldar-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: purple;
-}
-.eldar {
-  color: gold;
-}
-.eldar-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: gold;
-}
-.tau {
-  color: lightskyblue;
-}
-.tau-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: lightskyblue;
-}
-.tyrranids {
-  color: brown;
-}
-.tyrranids-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: brown;
-}
-.necrons {
-  color: grey;
-}
-.necrons-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: grey;
-}
-.neutral {
-  color: black;
-}
-.neutral-card {
-  padding-left: 5px;
-  border-left-style: solid;
-  border-left-color: black;
-}
+.space_marines      {color: goldenrod;}
+.astra_militarum  {color: darkslategrey;}
+.orks                        {color: darkgreen;}
+.chaos                      {color: darkorange;}
+.dark_eldar            {color: purple;}
+.eldar                      {color: gold;}
+.tau                          {color: lightskyblue;}
+.tyrranids              {color: brown;}
+.necrons                  {color: teal;}
+.neutral                  {color: darkgray;}

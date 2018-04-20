@@ -23,34 +23,62 @@
 
   <!-- App Files -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/folderstyle.css">
 	
   </head>
   <body>
+  
+    <nav class="navbar sticky-top transparent navbar-expand-lg navbar-dark" style="background-color: teal;">
+    <!-- Home Decks Collection      Search Login/Logout -->
+      <a class="navbar-brand mb-0 h1" href="/"><i class="fas fa-cog mx-2"></i>Home</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="decks">Decks</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link">Collection</a>
+          </li>
+          <li class="nav-item" disabled>
+            <a class="nav-link" href="#">Litmus</a>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0" >
+          <div class="input-group">
+            <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+            <div class="input-group-append">
+              <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+            </div>
+          </div>
+        </form>
+        <a href="/login" class="nav-item nav-link" title="Login/Logout"><i class="fas fa-user"></i></a>
+      </div>
+    </nav>
+    
     <div class="container">
-      <div class="row">
-        <div class="col-sm-4">
+      <div class="row my-2">
+        <div class="col-md-4">
           <h2>Packs</h2>
           <div id="packlist">
           </div>
         </div>
-        <div class="col-sm-8 folders">
-          <div class="row d-flex justify-content-between">
-            <div>
-              <h2>Virtual Folders</h2>
-            </div>
-            <div class="form-check">
+        <div class="col-md-8">  <!-- class="folders" -->
+          <div class="row justify-content-between">
+            <h2>Virtual Folders</h2>
+            <div class="form-check ">
               <input class="form-check-input" type="checkbox" id="showimg" value>
               <label class="form-check-label">Show Card Images</label>
             </div>
           </div>
-          <div class="row">
-            <div id="foldersections"></div>
+          <div class="row justify-content-center" id="foldersections">
           </div>
-          <div class="row d-flex justify-content-around">
-            <button class="btn btn-primary" id="pageprev"><i class="fas fa-chevron-left"></i> Previous</button>
-            <button class="btn btn-primary" id="pagenext"><i class="fas fa-chevron-right"></i> Next</button>
+          <div class="row justify-content-center" id="folderpager">
           </div>
-          <div class="row justify-content-center align-items-center" id="folderpages"></div>
+          <div class="row justify-content-center" id="folderpages">
+          </div>          
         </div>
       </div>
     </div>
@@ -79,15 +107,15 @@
 		
 		
 		// LOAD DATA
-		$.getJSON('js/data/wh40k_cycles.json',{_: new Date().getTime()}, function (data) {
+		$.getJSON('js/data/wh40k_cycles.json', function (data) {      //,{_: new Date().getTime()}
 			_cycles = TAFFY(data.data);			//console.log (data.data);
-			$.getJSON('js/data/wh40k_packs.json',{_: new Date().getTime()}, function (data) {
+			$.getJSON('js/data/wh40k_packs.json', function (data) {
 				_packs = TAFFY(data.data);			//console.log(data.data);
-				$.getJSON('js/data/wh40k_factions.json',{_: new Date().getTime()}, function (data) {
+				$.getJSON('js/data/wh40k_factions.json', function (data) {
 					_factions = TAFFY(data.data);	// NOTE: data.data
-					$.getJSON('js/data/wh40k_types.json',{_: new Date().getTime()}, function (data) {
+					$.getJSON('js/data/wh40k_types.json', function (data) {
 						_types = TAFFY(data.data);	// NOTE: data.data
-						$.getJSON('js/data/wh40k_cards.json',{_: new Date().getTime()}, function (data) {
+						$.getJSON('js/data/wh40k_cards.json', function (data) {
 							_cards = TAFFY(data.data);	//console.log(data);
 							
 							
@@ -125,7 +153,7 @@
 							if (typeof(Storage) !== "undefined")	{
 								_packs().order("position").each( function (pack,idx) {
 									// get localstorage value
-									checked = localStorage.getItem("whk-pack-" + pack.code) == null ? true : localStorage.getItem("whk-pack-" + pack.code) == "true";
+									checked = localStorage.getItem("whk-pack-" + pack.code) == null ? true : localStorage.getItem("whk-pack-" + pack.code) != "false";
 									// un-check child and parent
 									if (checked == false)	{
 										$('#packlist').find('input[data-code="' + pack.code + '"]').prop("checked",checked);
@@ -142,8 +170,10 @@
 							// FACTIONS Breadcrumb Nav
 							outp = '<ol class="breadcrumb bg-light">';
 							_factions().each( function (faction, idx)	{	//.order("side_code,name")
-								outp += '<li data-faction="' + faction.code + '" class="breadcrumb-item"><a href="#" style="color: ' + faction.color + '">' + faction.name + '</a></li>';
+								outp += '<li data-faction="' + faction.code + '" class="breadcrumb-item">'
+                      + '<a href="#" style="color: ' + faction.color + '">' + faction.name + '</a></li>';
 							});
+              outp += '<li data-faction="planets" class="breadcrumb-item"><a href="#">Planets</a></li>';
 							outp += '</ol>';
 							
 							$('#foldersections').html(outp);
@@ -174,86 +204,112 @@
 		function updateFolder()	{
 			pages = [];
 			
-			_types({"code":{"!is":"token"}}).order("position").each(function (type)	{
-				if (type.name == "Warlord Unit"){
-					_cards({"faction_code":faction_code,"type":type.name,"pack_code":filter_pack}).each(function (warlord) {
-						pages.push (warlord);
-						//pages.push ($.extend(warlord, {"text":"Bloodied"}));
-						pages.push({"title":"-"});
-						pages.push({"title":"-"});
-						pages = pages.concat(_cards({"signature_squad":warlord.signature_squad,"type_code":{"!is":"warlord_unit"}}).order("position").get());
-						
-						while (pages.length % 9 != 0) { pages.push({"title":"-"}); }
-					});
-				} else {
-					_cards({"faction_code":faction_code,
-									 "type":type.name,
-									 "pack_code":filter_pack}).order("name").each (function (card) {
-							if (card.signature_loyal != "Signature") {pages.push (card)}
-						});
-					//pages = pages.concat(_cards({"faction_code":faction_code,
-					//														 "type":type.name,
-					//														 "pack_code":filter_pack}).order("name").get());
-					// TODO remove Signature Cards
-				}
-				// Fill page with empty slots
-				if (_cards({"faction_code":faction_code,"pack_code":filter_pack}).count() > 9) {
-					while (pages.length % 9 != 0) { pages.push({"title":"-"}); }
-				}
-			});
-			while (pages.length % 9 != 0) { pages.push({"title":"-"}); }
+      if (faction_code == "planets") {
+        _cards({"type_code":"planet"}).each(function (card) {
+          pages.push (card);
+        });
+      } else {
+        _types({"code":{"!is":"token"}}).order("position").each(function (type)	{
+          if (type.name == "Warlord Unit"){
+            _cards({"faction_code":faction_code,"type":type.name,"pack_code":filter_pack}).each(function (warlord) {
+              pages.push (warlord);
+              //pages.push ($.extend(warlord, {"text":"Bloodied"}));
+              pages.push({"name":""});
+              pages.push({"name":""});
+              pages = pages.concat(_cards({"signature_squad":warlord.signature_squad,"type_code":{"!is":"warlord_unit"}}).order("position").get());
+              
+              while (pages.length % 9 != 0) { pages.push({"name":""}); }
+            });
+          } else {
+            _cards({"faction_code":faction_code,
+                     "type":type.name,
+                     "pack_code":filter_pack,
+                     "signature_loyal":{"!is":"Signature"}}).order("name").each (function (card) {
+              pages.push (card);
+            });
+          }
+          // Fill page with empty slots
+          if (_cards({"faction_code":faction_code,"pack_code":filter_pack}).count() > 9) {
+            while (pages.length % 9 != 0) { pages.push({"name":""}); }
+          }
+        });
+      }
+			while (pages.length % 9 != 0) { pages.push({"name":""}); }
 			drawpage();
 		}
 		
 		function drawpage()	{
 			var pagecount = (pages.length/9);
 			var outp = '';
+      var pager = '';
 			var id;
 			
 			pagenum = Math.max(0,pagenum);
 			pagenum = Math.min(pagecount-1,pagenum);
 			
-			if (pages.length == 0)	{
-				outp = 'Page 0 of 0';
-			} else {
-				outp = _factions({"code":faction_code}).first().name 
-					+ ' page ' + (pagenum + 1)
-					+ ' of ' + pagecount
-					+ ' :: ' + _types({"code":pages[pagenum*9].type_code}).first().name;
-					
-				outp += '<table class="table">';
-				for (var i=0; i<3; i++)	{
-					outp += '<tr>';
-					for (var x=0; x<3; x++)	{
-						id = (pagenum*9)+(i*3)+x;
-						outp += '<td data-code="' + (id < pages.length ? pages[id].code : '') + '">';
-						if (pages[id].title != "-") {
-							if ($('#showimg').prop('checked'))	{
-								outp += '<div><img class="cardimg" src="' + pages[id].img + '"><div>';
-								pages[id].code
-							} else {
-								outp += '<div>' + pages[id].name + '</div>'
-									+ '<br>'
-									+ '<div class="small d-flex justify-content-between"><div>' 
-									+ (pages[id].signature_loyal == "Loyal" ? '<i class="fas fa-crosshairs icon-loyal"></i>' : '')
-									+ (pages[id].signature_loyal == "Signature" ? '<i class="fas fa-cog icon-sig"></i><span class="text-dark ml-2">x'+ pages[id].quantity + '</span>' : '')
-									+ '</div><div>'
-									+ _cycles({"code":_packs({"code":pages[id].pack_code}).first().cycle_code}).first().name 
-									+ ' #' + parseInt(pages[id].position,10) 
-									+ '</div></div>';
-							}
-						} else {
-							outp += '-';
-						}
-						outp += '</div></td>';
-					}
-					outp += '</tr>';
-				}
-				outp += '</table>';
-			}
+    // Pagination
+      pager = '<ul class="pagination">';
+      pager += '<li class="page-item">'
+            + '<a class="page-link' + (pagenum == 0 ? ' disabled' : '')
+            + '" data-page="previous">'
+            + '<i class="fas fa-angle-double-left"></i></a></li>';
+            
+      for (var i=0; i<pagecount; i++) {
+        pager += '<li class="page-item' + (i == pagenum ? ' active' : '') + '">'
+                + '<a class="page-link" data-page="' + i + '">' + (i + 1) + '</a>'
+                + '</li>';
+      }
+      pager += '<li class="page-item">'
+            + '<a class="page-link' + (pagenum == pagecount ? ' disabled' : '')
+            + '" data-page="next">'
+            + '<i class="fas fa-angle-double-right"></i></a></li>';
+      
+      $('#folderpager').html( pager );
+      
+      outp = cardCards();
 			$('#folderpages').html(outp);
 		}
 		
+    function cardCards() {
+      var outp = '';
+      var id;
+      
+      
+      if (pages.length == 0) {
+        outp = 'You do not own any ' + _factions({"code":faction_code}).first().name + ' cards.';
+      } else {
+        outp += '<div class="container">'; // reset card widths
+        outp += '<span>'+ _factions({"code":faction_code}).first().name  + ' :: ' + _types({"code":pages[pagenum*9].type_code}).first().name + '</span>';
+        
+        for (var i=0; i<3; i++) {
+          outp += '<div class="card-deck my-1">';
+          for (var x=0; x<3; x++) {
+            id = (pagenum*9)+(i*3)+x;
+            outp += '<div class="card">';
+            if (pages[id].name != "") {
+              if ($('#showimg').prop('checked'))	{
+                outp += '<img class="card-img" src="' + pages[id].img + '" alt="' + pages[id].name + '">';
+              } else {
+                outp += '<div class="card-body" data-code="' + pages[id].code.toString() + '">'
+                      + '<h4 class="card-title">' + pages[id].name + '</h4>'
+                      + '</div>';
+              }
+            // footer
+              outp += '<div class="card-footer d-flex justify-content-between">'
+                + '<small>' + pages[id].pack + '&nbsp;#' + parseInt(pages[id].position,10) + '</small>'
+                + (pages[id].signature_loyal == 'Signature' ? '<i class="fas fa-cog icon-sig"></i>' : '' )
+                + (pages[id].signature_loyal == 'Loyal' ? '<i class="fas fa-crosshairs icon-loyal"></i>' : '' )
+                + '</div>';
+            }
+            outp += '</div>';
+          }
+          outp += '</div>';
+        }
+        outp += '</div>';
+      }
+      return outp;
+    }
+    
 // Listeners //
 		$('#foldersections').on('click','li',function () {
 			pagenum = 0;
@@ -285,51 +341,82 @@
 				$(this).parent().parent().find("div.form-check.pa [data-cycle='" + cyclecode + "']input[type='checkbox']").prop("checked",checkpar);
 			});
 		
-		// Folder Page Nav
-		$('#pageprev').on('click',function () {
-			pagenum--;
-			drawpage();
-		});
-		$('#pagenext').on('click',function () {
-			pagenum++;
-			drawpage();
-		});
+	// Folder Page Nav
+    $('#folderpager').on('click','a',function(e)  {
+      e.preventDefault();
+      switch ($(this).data('page')) {
+        case 'previous':
+          pagenum--;
+          break;
+        case 'next':
+          pagenum++;
+          break;
+        default:
+          pagenum = $(this).data('page');
+      }
+      drawpage();
+    });
+    
+    
 		// Show Card Images checkbox
 		$('#showimg').on('change',function() {
 			drawpage();
 		});
 	
 	// card qtip
-		$('#folderpages').on('mouseover','td',function() {
+		$('#folderpages').on('mouseover','.card-body',function() {
 			var card = _cards({"code":$(this).data('code').toString()}).first();
+      
+      var qtipBody = 
 			$(this).qtip({
 				overwrite: false,
 				show: {
 					ready: true
 				},
 				content: {
-					text: 
-						'<div><h4>' + card.name + '</h4></div>'
-						+ '<div>' +  card.text + '</div>'
-						+ '<br><div class="footer">' 
-						+ _cycles({"code":_packs({"code":card.pack_code}).first().cycle_code}).first().name
-						+ ' - '							 
-						+ _packs({"code":card.pack_code}).first().name + ' #' + parseInt(card.position,10) + '</div>'
+					text: generateQtipBody(card)
 				},
 				style: {
 					classes: 'qtip-bootstrap',
 					tip: false
 				},
 				position: {
-					my: 'left center',
-					at: 'right center'
+					my: 'bottom center',
+					at: 'top center'
 				},
 				hide:	{
 					//event: 'unfocus'
 				}
 			});
 		});
-	});
+    function generateQtipBody (r) {
+      return '<div><h4>' + r.name + '</h4></div>'
+           + '<div class="my-2">'
+            + (typeof r.cost != 'undefined' ? '<i class="fas fa-cog mx-2"></i>' + r.cost  : '')
+            + (typeof r.command_icons != 'undefined' ? '<i class="fas fa-gavel mx-2"></i>' + r.command_icons : '')
+            + (typeof r.shields != 'undefined' ? '<i class="fas fa-shield-alt mx-2"></i>' + r.shields : '')
+            + (typeof r.attack != 'undefined' ? '<i class="fas fa-bolt mx-2"></i>' + r.attack : '')
+            + (typeof r.hp != 'undefined' ? '<i class="fas fa-heartbeat mx-2"></i>' + r.hp  : '')
+            // Planets:
+            + (typeof r.card_bonus !== "undefined" ? '<i class="fas fa-plus-square mx-2"></i>: ' + r.card_bonus : '') 	
+            + (typeof r.resource_bonus !== "undefined" ? '<i class="fas fa-cogs mx-2"></i>: ' + r.resource_bonus  : '') 	
+            
+           + '</div>'
+           + '<div class="my-2">' +  r.text.replace('[RESOURCE]','<i class="fas fa-cog mx-1"></i>') + '</div>'
+           + '<div class="small mt-2 text-right">' 
+            + (typeof r.faction !== 'undefined' 
+               ? r.faction + (r.signature_loyal != null ? ' (' + r.signature_loyal + ')'  : '') + ' :: '
+               : '')
+            + r.type
+           + '</div>'
+           + '<div class="small text-right">' 
+           + _cycles({"code":_packs({"code":r.pack_code}).first().cycle_code}).first().name //WARNING _cycles
+           + ' :: ' + r.pack + ' #' + parseInt(r.position,10) 
+           + '</div>';
+    }
+	
+  });
+  
 
 </script>
 

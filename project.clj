@@ -20,12 +20,40 @@
                [org.clojure/core.async  "0.3.443"]
                [ring/ring-defaults "0.3.1"]
                [reagent "0.7.0"]
-               [reagent-utils "0.2.1"]]
+               [reagent-utils "0.2.1"]
+               [com.cemerick/friend "0.2.3"]
+               [org.clojure/java.jdbc "0.7.5"]
+               [org.xerial/sqlite-jdbc "3.7.2"]]
 
   :plugins [[lein-figwheel "0.5.14"]
-            [lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]]
+           [lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]]
 
   :source-paths ["src/clj"]
+
+  :cljsbuild {:builds
+              [{:id "dev"
+                :source-paths ["src/cljs"]
+                :figwheel true
+                :compiler {:main dansite.core
+                          :asset-path "js/compiled/out"
+                          :output-to "resources/public/js/compiled/cljsapp.js"
+                          :output-dir "resources/public/js/compiled/out"
+                          :source-map-timestamp true
+                          ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
+                          ;; https://github.com/binaryage/cljs-devtools
+                          :preloads [devtools.preload]}}
+               ;; This next build is a compressed minified build for
+               ;; production. You can build this with:
+               ;; lein cljsbuild once min
+               {:id "min"
+                :source-paths ["src/cljs"]
+                :compiler {:output-to "resources/public/js/compiled/cljsapp.js"
+                           :main dansite.core
+                           ;; :externs ["resources/public/js/libs/externs.js"] ;; var tooltip = {}; prevents .tooltip from being munged on cljsbuild http://lukevanderhart.com/2011/09/30/using-javascript-and-clojurescript.html
+                           :optimizations :advanced 
+                           :pretty-print false}}]}
+
+  :figwheel {:css-dirs ["resources/public/css"]} ;; watch and update CSS
 
   ;; Setting up nREPL for Figwheel and ClojureScript dev
   ;; Please see:

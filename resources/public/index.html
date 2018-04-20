@@ -23,6 +23,7 @@
   <!-- App Files -->
 		<link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    
     <script src="js/whk_tools.js"></script>
     <script src="js/whk_qtip.js"></script>
     <script src="js/whk_deckbuilder.js"></script>
@@ -30,148 +31,36 @@
 
   </head>
   <body>
-    <nav class="navbar navbar-dark bg-dark mb-2">
-      <span class="navbar-brand">Home</span>
-    </nav>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-6 decklist">
-          <div class="row" style="min-height: 200px;">
-            <div id="decklist">No cards selected</div>
-          </div>
-          <div class="row">
-            <form class="form-inline" method="POST" action="#" id="save_form" role="form">
-              <p>Not implemented
-            </form>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <ul class="nav nav-tabs nav-fill">
-            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#deckbuild">Build</a></li>
-            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#deckcheck">Check</a></li>
-            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#deckstats">Stats</a></li>
-            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#decksets">Sets</a></li>
-            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#deckloader">Load</a></li>
-          </ul>
-          <div class="tab-content mt-2">
-            <div id="deckbuild" class="tab-pane active" role="tabpanel">
-              <div class="row">
-                <div class="col-md">
-                  <input type="text" class="form-control mb-1" placeholder="Filter List" id="filterlist">
-                </div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-md">
-                  <div class="btn-group btn-group-toggle" data-toggle="buttons" id="factionfilter">
-                    <label class="btn btn-outline-secondary" title="Space Marines"><input type="checkbox" name="space_marines" autocomplete="off">SM</label>
-                    <label class="btn btn-outline-secondary" title="Imperial Guard"><input type="checkbox" name="astra_militarum" autocomplete="off">AM</label>
-                    <label class="btn btn-outline-secondary" title="Orks"><input type="checkbox" name="orks" autocomplete="off">Or</label>
-                    <label class="btn btn-outline-secondary" title="Chaos"><input type="checkbox" name="chaos" autocomplete="off"><i class="fas fa-asterisk"></i></label>
-                    <label class="btn btn-outline-secondary" title="Dark Eldar"><input type="checkbox" name="dark_eldar" autocomplete="off">DE</label>
-                    <label class="btn btn-outline-secondary" title="Eldar"><input type="checkbox" name="eldar" autocomplete="off">El</label>
-                    <label class="btn btn-outline-secondary" title="Tau"><input type="checkbox" name="tau" autocomplete="off"><i class="far fa-circle"></i></label>
-                    <label class="btn btn-outline-secondary" title="Tyranids"><input type="checkbox" name="tyranids" autocomplete="off">Ty</label>
-                    <label class="btn btn-outline-secondary" title="Necrons"><input type="checkbox" name="necrons" autocomplete="off">Ne</label>
-                    <label class="btn btn-outline-secondary" title="Neutral"><input type="checkbox" name="neutral" autocomplete="off"><i class="fas fa-plus"></i></label>
-                  </div>
-                  <div class="btn-group btn-group-toggle" data-toggle="buttons" id="typefilter">
-                    <label class="btn btn-outline-secondary" title="Warlord Unit"><input type="checkbox" name="warlord_unit" autocomplete="off"><i class="fas fa-user-circle"></i></label>
-                    <label class="btn btn-outline-secondary" title="Army Unit"><input type="checkbox" name="army_unit" autocomplete="off"><i class="fas fa-users"></i></label>
-                    <label class="btn btn-outline-secondary" title="Attachment"><input type="checkbox" name="attachment" autocomplete="off"><i class="fas fa-user-plus"></i></label>
-                    <label class="btn btn-outline-secondary" title="Event"><input type="checkbox" name="event" autocomplete="off"><i class="fas fa-bolt"></i></label>
-                    <label class="btn btn-outline-secondary" title="Support"><input type="checkbox" name="support" autocomplete="off"><i class="fas fa-hands-helping"></i></label>
-                    <label class="btn btn-outline-secondary" title="Synapse Unit"><input type="checkbox" name="synapse" autocomplete="off"><i class="fas fa-dna"></i></label>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md">
-                  <table id="cardtbl" class="table table-hover table-sm">
-                    <thead class="thead-dark">
-                      <tr>
-                        <th>Quantity</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Fac.</th>
-                        <th title="Cog"><i class="fas fa-cog"></i></th>
-                        <th title="Command \ Shields"><i class="fas fa-gavel"></i></th>
-                        <th title="Attack"><i class="fas fa-bolt"></i></th>
-                        <th title="HP"><i class="fas fa-shield-alt"></i></th>
-                      </tr>
-                    </thead>
-                    <tbody id="tablebody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-            <div id="deckcheck" class="tab-pane" role="tabpanel">
-              <div class="row">
-                <div class="col-md-12">
-                  <div id="faction_name"></div>
-                  <div id="plot_cards"></div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12">
-                  <div id="plot_data"></div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12" align="center">
-                  <b>Draw:&nbsp;</b>
-                  <div class="btn-group">
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="1" id="draw1">1</button>
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="2" id="draw2">2</button>
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="3" id="draw3">3</button>
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="4" id="draw4">4</button>
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="7" id="draw7">7</button>
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="all" id="drawall">All</button>
-                    <button type="button" class="btn btn-default btn-sm btn-draw" val="0" id="drawreset">Reset</button>
-                  </div>
-                  <span id="choosecardlist"></span>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12" align="center">
-                  <div id="hand"></div>
-                </div>
-              </div>
-            </div>
-            <div id="deckstats" class="tab-pane" role="tabpanel">
-              <div class="row">
-                <div class="col-md-12">
-                  <canvas id="barIcons" width="400" height="400"></canvas>
-                  <canvas id="lineCost" width="400" height="400"></canvas>
-                  <canvas id="lineStr" width="400" height="400"></canvas>
-                  <canvas id="pieFact" width="400" height="400"></canvas>
-                </div>
-              </div>
-            </div>
-            <div id="decksets" class="tab-pane" role="tabpanel">
-              <div class="row">
-                <div class="col-md-12 ml-3">
-                  <div id="setlist"></div>
-                </div>
-              </div>
-            </div>
-            <div id="deckloader" class="tab-pane" role="tabpanel">
-              <div class="row">
-                <div class="col-md-6">
-                  <textarea class="form-control" style="width: 450px;" type="text" id="deckload" rows="20"></textarea>
-                  <button class="btn btn-default" id="loaddeck">Load</button>
-                </div>
-              </div>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: teal;">
+    <!-- Home Decks Collection      Search Login/Logout -->
+      <span class="navbar-brand mb-0 h1"><i class="fas fa-cog mx-2"></i>Home</span>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="/decks">Decks</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/folders">Collection</a>
+          </li>
+          <li class="nav-item" disabled>
+            <a class="nav-link" href="#">Litmus</a>
+          </li>
+        </ul>
+        <form class="form-inline my-2 my-lg-0">
+          <div class="input-group">
+            <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+            <div class="input-group-append">
+              <button class="btn" type="submit"><i class="fas fa-search"></i></button>
             </div>
           </div>
-        </div>
+        </form>
+        <a href="/login" class="nav-item nav-link" title="Login/Logout"><i class="fas fa-user"></i></a>
       </div>
-    </div>
-    <div style="background-color: #DDD; border-top: black solid 2px; padding: 10px 10px 50px;">
-      <p>Information
-    </div>
+    </nav>
     
-    <div id="cardmodal" class="modal" role="dialog"></div>
-    
-    <div id="snackbar"></div>
+    <div class="app"></div>
   </body>
 </html>
