@@ -23,7 +23,7 @@ used on all pages. #page# defines active nav item"
         [:li.nav-item 
           [:a.nav-link {:href "/folders"} "Collection"]]
         [:li.nav-item 
-          [:a.nav-link.disabled {:href "/litmus"} "Litmus"]]]
+          [:a.nav-link.disabled "Litmus"]]] ;; {:href "/litmus"}
       ;; Inline Search Form
         [:form.form-inline.my-2.my-lg-0
           [:div.input-group

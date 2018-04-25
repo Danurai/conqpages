@@ -4,6 +4,7 @@ $(document).ready(function () {
 	function isTouchDevice(){
     return true == ("ontouchstart" in window || window.DocumentTouch && document instanceof DocumentTouch);
   }	
+  
 	$("body").on("mouseenter",".card-tooltip", function() {
 		var card = _cards({"code":$(this).data('code').toString()}).first();
 		

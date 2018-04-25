@@ -33,7 +33,7 @@ $(document).ready(function () {
           _sets = TAFFY(data.data);
           
           $('#deck-content').val('[{"code":"010001","qty":1},{"code":"010009","qty":1},{"code":"010008","qty":4},{"code":"010011","qty":1},{"code":"010010","qty":2},{"code":"010015","qty":2},{"code":"010016","qty":1},{"code":"010023","qty":1},{"code":"010020","qty":1},{"code":"010014","qty":1},{"code":"010021","qty":1},{"code":"010017","qty":1},{"code":"010022","qty":1},{"code":"010013","qty":2},{"code":"010018","qty":1},{"code":"010019","qty":1},{"code":"010012","qty":1},{"code":"010027","qty":1},{"code":"010028","qty":1},{"code":"010024","qty":1},{"code":"010026","qty":1},{"code":"010025","qty":1},{"code":"010029","qty":1},{"code":"010030","qty":1},{"code":"010174","qty":1},{"code":"010172","qty":1},{"code":"010169","qty":1},{"code":"010173","qty":1},{"code":"010040","qty":1},{"code":"010046","qty":1},{"code":"010045","qty":2},{"code":"010039","qty":1},{"code":"010044","qty":1},{"code":"010035","qty":2},{"code":"010037","qty":1},{"code":"010041","qty":1},{"code":"010049","qty":1},{"code":"010170","qty":1},{"code":"010048","qty":1},{"code":"010053","qty":1},{"code":"010051","qty":1},{"code":"010171","qty":1}]');
-          updateSets();      
+          updateSets();
           loadDeck();
           writedeck();
           writeoutput();
@@ -52,7 +52,7 @@ $(document).ready(function () {
 	});
 	
 /* Decklist Listeners*/
-	$('#decklist').on('click','.card-tooltip',function () {
+	$(document).on('click','.card-tooltip',function () {
 		var outp = '';
 		var card = _cards({"code":String($(this).data("code"))}).first();
 		
@@ -253,13 +253,12 @@ $(document).ready(function () {
 		outp = '<tr>'
 			+ '<td>' + btns
 			+ '<td>'
-				+ '<span class="card-tooltip" data-code="' + r.code + '"><a href="">' 
+				+ '<a href="/card/' + r.code + '" class="card-tooltip" data-code="' + r.code + '" data-toggle="modal" data-target="#cardmodal" data-remote="false">' 
 				+ (r.unique ? '&bull;&nbsp;' : '') 
 				+ r.name
 				+ (vns > 1 ? '&nbsp;(' + r.Set + ')' : '')
-        + '</a>'
         + (r.signature_loyal == "Loyal" ? '<i class="fas fa-crosshairs icon-loyal ml-2" title="Loyal"></i>' : '')
-        + '</span>'
+        + '</a>'
 			+ '</td>'
 			+ '<td>' + (typeof r.type !== "undefined" ? r.type : "") + '</td>'
 			+ '<td class="text-center">' + r.faction.slice(0,2) + '</td>'
@@ -341,7 +340,7 @@ $(document).ready(function () {
 		}		
 		$('#decklist').html(outp);
 		
-		//updateCharts();
+		updateCharts();
     
 		// Game Prep
     var content = '';
@@ -570,9 +569,9 @@ $(document).ready(function () {
 /* STATS TAB */
 	// Code to compile data and call Charts scripts
 	function updateCharts()	{
-		barIcons();
+		//barIcons();
 		lineCost();
-		lineStrength();
+		//lineStrength();
 	}
 	
 	function barIcons()	{
@@ -622,12 +621,12 @@ $(document).ready(function () {
 		});
 	}
 	function lineCost()	{
-		var maxVal = decklist({"Cost":{"!is":"X"}}).max("Cost");
+		var maxVal = decklist({"cost":{"!is":"X"}}).max("cost");
 		var datavals = [];
 		var datacounts = [];
 		for (var i=0; i<= maxVal; i++)	{
 			datavals.push(String(i));
-			datacounts.push(decklist({"Type":"Character","Cost":String(i)}).sum("qty"));
+			datacounts.push(decklist({"cost":i}).sum("qty"));
 		}
 		
 		var ctx = $('#lineCost').get(0).getContext("2d");
