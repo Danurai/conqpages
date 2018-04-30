@@ -1,8 +1,13 @@
 (ns dansite.misc
   (:require 
     [hiccup.page :as h]
-    [cemerick.friend :as friend]))
+    [cemerick.friend :as friend]
+    [clojure.java.io :as io]
+    [clojure.data.json :as json]
+    [dansite.users :as users :refer [users]]))
     
+
+(def cards (json/read-str (slurp (io/resource "public/js/data/wh40k_cards.json")) :key-fn keyword))
 
 (def pretty-head
   [:head
@@ -27,11 +32,6 @@
     (h/include-css "https://fonts.googleapis.com/css?family=Exo+2")   ;; <link href="https://fonts.googleapis.com/css?family=Aldrich|Electrolize|Exo|Exo+2|Jura|Mina|Play|Rationale|Sarpanch" rel="stylesheet">
     ])
 
-(defn- activeuri
-"Returns 'active' if the active uri matches the uri string"
-  [req uri]
-  )
-  
 (defn- navlink
 "Returns hiccup code for a navbar link"
   [req title]
@@ -40,41 +40,40 @@
     [:li.nav-item
       [:a.nav-link {:href link :class (if (= link uri) "active")} title]]))
     
-(defn navbar [req]
+(defn navbar [req & args]
   [:nav.navbar.navbar-expand-lg.navbar-dark {:style "background-color: teal;"}
     [:div.container
-      ;; Home Brand with Icon
+    ;; Home Brand with Icon
       [:a.navbar-brand.mb-0.h1 {:href "/"}
-        [:i.fas.fa-cog.mx-2] 
-        "Home&nbsp;"]
-      ;; Collapse Button for smaller viewports
+        [:i.fas.fa-cog.mx-2] "Home&nbsp;"]
+    ;; Collapse Button for smaller viewports
       [:button.navbar-toggler {:type "button" :data-toggle "collapse" :data-target "#navbarSupportedContent" 
                             :aria-controls "navbarSupportedContent" :aria-label "Toggle Navigation" :aria-expanded "false"}
         [:span.navbar-toggler-icon]]
-      ;; Collapsable Content
+    ;; Collapsable Content
       [:div#navbarSupportedContent.collapse.navbar-collapse
-        ;; List of Links
+    ;; List of Links
         [:ul.navbar-nav.mr-auto
           (navlink req "Decks")
           (navlink req "Collection")
-          ;;(navlink req "Search")
+    ;;(navlink req "Search")
           [:li.nav-item 
             [:a.nav-link.disabled "Litmus"]]] ;; {:href "/litmus"}
-        ;; Inline Search Form
+    ;; Inline Search Form
           [:form.form-inline.mx-2.my-lg-0 {:action "/find" :method "get"}
             [:div.input-group
               [:input.form-control {:type "search" :placeholder "search" :name "q" :aria-label "Search"}]
               [:div.input-group-append
-                [:button.btn {:type "submit"}
+                [:button.btn.bg-light {:type "submit"}
                   [:i.fas.fa-search]]]]]
-        ;; Login Icon
+    ;; Login Icon
           [:span.nav-item.dropdown
             [:a#userDropdown.nav-link.dropdown-toggle.text-white {:href="#" :role "button" :data-toggle "dropdown" :aria-haspopup "true" :aria-expanded "false"}
               [:i.fas.fa-user]]
               (if-let [identity (friend/identity req)]
                 [:div.dropdown-menu {:aria-labelledby "userDropdown"}
-                  [:a.dropdown-item {:href "/admin"} (str identity)]
-                  [:div.dropdown-divider]
+                  (if (friend/authorized? #{::users/admin} (friend/identity req))
+                    [:a.dropdown-item {:href "/admin"} "Admin Console"])
                   [:a.dropdown-item {:href "/logout"} "Logout"]]
                 [:div.dropdown-menu {:aria-labelledby "userDropdown"}
                   [:a.dropdown-item {:href "/login"} "Login"]])]]]])

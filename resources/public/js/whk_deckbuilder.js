@@ -9,7 +9,7 @@ $(document).ready(function () {
 	var facFilter = [];
 	var setFilter = [];
   
-  var LS_pre = 'whk-pack';    // Local Storage Prefix
+  var LS_pre = 'whk-pack-';    // Local Storage Prefix
   
   var _planets;
   var _sets;
@@ -32,7 +32,7 @@ $(document).ready(function () {
         $.getJSON("js/data/wh40k_packs.json", function (data) {
           _sets = TAFFY(data.data);
           
-          $('#deck-content').val('[{"code":"010001","qty":1},{"code":"010009","qty":1},{"code":"010008","qty":4},{"code":"010011","qty":1},{"code":"010010","qty":2},{"code":"010015","qty":2},{"code":"010016","qty":1},{"code":"010023","qty":1},{"code":"010020","qty":1},{"code":"010014","qty":1},{"code":"010021","qty":1},{"code":"010017","qty":1},{"code":"010022","qty":1},{"code":"010013","qty":2},{"code":"010018","qty":1},{"code":"010019","qty":1},{"code":"010012","qty":1},{"code":"010027","qty":1},{"code":"010028","qty":1},{"code":"010024","qty":1},{"code":"010026","qty":1},{"code":"010025","qty":1},{"code":"010029","qty":1},{"code":"010030","qty":1},{"code":"010174","qty":1},{"code":"010172","qty":1},{"code":"010169","qty":1},{"code":"010173","qty":1},{"code":"010040","qty":1},{"code":"010046","qty":1},{"code":"010045","qty":2},{"code":"010039","qty":1},{"code":"010044","qty":1},{"code":"010035","qty":2},{"code":"010037","qty":1},{"code":"010041","qty":1},{"code":"010049","qty":1},{"code":"010170","qty":1},{"code":"010048","qty":1},{"code":"010053","qty":1},{"code":"010051","qty":1},{"code":"010171","qty":1}]');
+          // $('#deck-content').val('[{"code":"010001","qty":1},{"code":"010009","qty":1},{"code":"010008","qty":4},{"code":"010011","qty":1},{"code":"010010","qty":2},{"code":"010015","qty":2},{"code":"010016","qty":1},{"code":"010023","qty":1},{"code":"010020","qty":1},{"code":"010014","qty":1},{"code":"010021","qty":1},{"code":"010017","qty":1},{"code":"010022","qty":1},{"code":"010013","qty":2},{"code":"010018","qty":1},{"code":"010019","qty":1},{"code":"010012","qty":1},{"code":"010027","qty":1},{"code":"010028","qty":1},{"code":"010024","qty":1},{"code":"010026","qty":1},{"code":"010025","qty":1},{"code":"010029","qty":1},{"code":"010030","qty":1},{"code":"010174","qty":1},{"code":"010172","qty":1},{"code":"010169","qty":1},{"code":"010173","qty":1},{"code":"010040","qty":1},{"code":"010046","qty":1},{"code":"010045","qty":2},{"code":"010039","qty":1},{"code":"010044","qty":1},{"code":"010035","qty":2},{"code":"010037","qty":1},{"code":"010041","qty":1},{"code":"010049","qty":1},{"code":"010170","qty":1},{"code":"010048","qty":1},{"code":"010053","qty":1},{"code":"010051","qty":1},{"code":"010171","qty":1}]');
           updateSets();
           loadDeck();
           writedeck();
@@ -44,13 +44,6 @@ $(document).ready(function () {
     });
   });
 
-/* DELETE Confirm */
-	$('#delete_deck').on('click',function () {
-		if (confirm("Are you sure you want to delete " + $('#deckname') + '?')) {
-			alert ("Dodelerte");
-		}
-	});
-	
 /* Decklist Listeners*/
 	$(document).on('click','.card-tooltip',function () {
 		var outp = '';
@@ -91,6 +84,9 @@ $(document).ready(function () {
 		updateDeck(this.name.substring(4), parseInt($(this).val(),10));
 		$('#cardmodal').modal('hide');
 	});
+  $('#deck-name').on('change', function () {
+    writeoutput();
+  });
   $('#newdeck').on('click',function() {
     if (confirm("Are you sure you want to create a new deck?")) {
       decklist().remove();
@@ -123,6 +119,7 @@ $(document).ready(function () {
 		}
 		updateTableBody();
 	});
+  
   $('#typefilter').on('change','input[type=checkbox]', function() {
 		var idx = $.inArray($(this).attr('name'),typFilter);
 		if (idx == -1 && this.checked) {
@@ -147,14 +144,16 @@ $(document).ready(function () {
   // Deck Format
   
 	function loadDeck() {
-		var deck = $.parseJSON($('#deck-content').val());
-		$.each(deck, function(id,item) {
-			card = _cards({"code":item.code}).first();
-			card.qty = item.qty;
-      decklist.insert(card);
-			//updateDeck(item.code, item.qty);
-		})
+		if ($.parseJSON($('#deck-content').val() != "")) {
+      var deck = $.parseJSON($('#deck-content').val());
+      $.each(deck, function(id,item) {
+        card = _cards({"code":item.code}).first();
+        card.qty = item.qty;
+        decklist.insert(card);
+      })
+		}
 	}
+  
 	function updateDeck(cardcode, cardqty)	{
 		var card = _cards({"code":cardcode}).first();
 		card["qty"] = cardqty;
@@ -179,9 +178,9 @@ $(document).ready(function () {
 		
     //console.log (decklist().stringify());
     
-		updateTableBody();
 		writedeck();
 		writeoutput();
+		updateTableBody();
 	}
 	
 	function updateTableBody() {
@@ -236,14 +235,14 @@ $(document).ready(function () {
 		
 		var vns = _cards({"name":r.name}).count();
 		
-		var btns = '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
+		var btns = '<div class="btn-group whk-btn-group-xs btn-group-toggle" data-toggle="buttons">';
     if (r.signature_loyal == "Signature") {
        btns += '<label class="btn btn-sm btn-info" disabled>'
               + '<input type="radio" name="qty-' + r.code + '" value="' + i + '" disabled>' + inset 
               + '</label>';
     } else {
       for (var i=0; i<=maxallowed; i++) {
-        btns += '<label class="btn btn-sm btn-outline-secondary' + (i==inset?' active':'') + '">'
+        btns += '<label class="btn btn-outline-secondary' + (i==inset?' active':'') + '">'
               + '<input type="radio" name="qty-' + r.code + '" value="' + i + '">' + i 
               + '</label>';
       }
@@ -271,7 +270,7 @@ $(document).ready(function () {
 		return (outp);
 	}
 	function maxindeck(r) {
-		var core = localStorage.getItem( LS_pre + '-core-count') == null ? 1 : localStorage.getItem( LS_pre + '-core-count') ;
+		var core = localStorage.getItem( LS_pre + 'core-count') == null ? 1 : localStorage.getItem( LS_pre + 'core-count') ;
 		var maxallowed = 3;
 		
 		switch (r.type_code) {
@@ -301,26 +300,29 @@ $(document).ready(function () {
     faction_code = typeof identity == 'undefined' ? 'neutral' : identity.faction_code;
     
     var deckTypes = ["Army Unit","Synapse Unit","Attachment","Event","Support"];
+    var numcards = decklist({"type_code":{"!is":"warlord_unit"}}).sum("qty");
     
     if (decklist().count() == 0) {
       outp = '<div class="row h5">Empty Deck</div>';
     } else {
       // Header
-      outp += '<div class="row">'
-            + '<div class="col-3">'
-              + '<img class="rounded img-fluid" src="' + identity.img + '"></img>'
-            + '</div>'
-            + '<div class="col">'
-              + '<div><a href="/card/' + identity.code + '" class="card-tooltip h4" data-code="' + identity.code + '">'
-              + identity.name + '</a>'
-              + '<div class="h5 text-muted">' 
-              + /^<b>(.+)<\/b><br>/.exec(identity.text)[1]
+      if (identity)  {
+        outp += '<div class="row">'
+              + '<div class="col-4">'
+                + '<img class="rounded img-fluid" src="' + identity.img + '"></img>'
               + '</div>'
-              + '<div class="h5">Total Cards: (' + decklist({"type":deckTypes}).sum("qty") + ')</div>'
-            // Check Validity
-              + '<div>' + checkValidity() + '</div>'
-            + '</div></div>';
-      outp += '<div class="row"><div class="col-sm">';	
+              + '<div class="col">'
+                + '<div><a href="/card/' + identity.code + '" class="card-tooltip h4" data-code="' + identity.code + '">'
+                + identity.name + '</a></div>'
+                + '<div class="h5 text-muted">' 
+                + /^<b>(.+)<\/b><br>/.exec(identity.text)[1]
+                + '</div>'
+              // Check Validity
+                + (numcards < 50 ? '<div class="h5 text-danger">' : '<div class="h5">' ) + 'Cards: ' + numcards +'/50' + '</div>'
+                + '<div class="small">' + checkValidity() + '</div>'
+              + '</div></div>';
+        outp += '<div class="row"><div class="col-sm">';	
+      }
 
       // Content
       $.each(deckTypes, function (id,cardtype) {
@@ -331,7 +333,6 @@ $(document).ready(function () {
             outp += '<br>' + card.qty + 'x <a href="/card/' + card.code + '" class="card-tooltip" data-code="' + card.code + '" data-toggle="modal" data-remote="false" data-target="#cardmodal">' + card.name + '</a>';
             if (card.faction_code != faction_code) { outp += ' <i class="fa fa-flag ' + card.faction_code + '"></i>'; }
             if (card.signature_loyal == "Signature") { outp += ' <i class="fa fa-cog icon-sig"></i>'; }
-            //if (card.signature_loyal == "Loyal") { outp += ' <i class="fa fa-crosshairs icon-loyal"></i>'; }
           });
           outp += '</div>';
         }
@@ -371,30 +372,40 @@ $(document).ready(function () {
   function checkValidity()  {
     // Returns html formatted string
     var validresult = [];
-    //1 deck size 
-    var numcards = decklist({"type_code":{"!is":"warlord_unit"}}).sum("qty");
-    if (numcards < 50)  {
-      validresult.push ('Minimum 50 cards:&nbsp;<span class="text-danger">' + numcards + '</span>/50 ');
-    }
+    //1 deck size - Included in Standard output
+    if (decklist({"type_code":{"!is":"warlord_unit"}}).count() < 50)  {validresult.push ("Minimum deck size is 50.");}
     
-    //2 cards from multiple factions
-    var factions = decklist({"faction_code":{"!is":"neutral"}}).distinct("faction");
-    if (factions.length > 2) {
-      validresult.push ('Only inlcude cards from one allied faction: <span class="text-danger">' + factions.join(', ') + '</span>');
-    }
-    
-    //3 loyal cards from other factions
     var faction_code = decklist({"type_code":"warlord_unit"}).first().faction_code;
+    
     if (typeof faction_code !== 'undefined')  {
-      var sigloyal = [];
-      decklist({"faction_code":{"!is":faction_code},"signature_loyal":["Signature","Loyal"]}).each(function (r) {
-          sigloyal.push ('<a href="/card/' + r.code + '" data-code="' + r.code + '" class="card-tooltip" data-toggle="modal" data-target="#cardmodal">' + r.name + '</a>');
+    //2 cards from forbidden factions
+      var faction_codes = decklist({"faction_code":{"!is":"neutral"}}).distinct("faction_code");
+      var ally_codes = $.merge([faction_code], _factions({"code":faction_code}).first().ally_codes);
+      var not_allies = [];
+      
+      $.each(faction_codes, function (id, ally)  {
+        if ($.inArray(ally, ally_codes) < 0) {not_allies.push(_factions({"code":ally}).first().name);}
       });
-      if (sigloyal.length > 0) {
-        validresult.push ('Cannot include Loyal cards from other factions: <span class="text-danger">' + sigloyal.join(', ') + '</span>');
+      if (not_allies.length > 0) {
+        validresult.push ('Cannot include cards from unallied factions: <span class="text-danger">' + not_allies.join(', ') + '</span>')
+      } else {
+    //3 cards from multiple factions - change for NECRONS?
+        var factions = decklist({"faction_code":{"!is":"neutral"}}).distinct("faction");
+        if (factions.length > 2) {
+          validresult.push ('Only inlcude cards from one allied faction: <span class="text-danger">' + factions.join(', ') + '</span>');
+        }
       }
     }
-    return (validresult.length > 0 ? validresult.join('<p>') : "Deck is Valid");
+    
+    //4 loyal cards from other factions
+    var sigloyal = [];
+    decklist({"faction_code":{"!is":faction_code},"signature_loyal":["Signature","Loyal"]}).each(function (r) {
+        sigloyal.push ('<a href="/card/' + r.code + '" data-code="' + r.code + '" class="card-tooltip" data-toggle="modal" data-target="#cardmodal">' + r.name + '</a>');
+    });
+    if (sigloyal.length > 0) {
+      validresult.push ('Cannot include Loyal cards from other factions: <span class="text-danger">' + sigloyal.join(', ') + '</span>');
+    }
+    return (validresult.length > 0 ? validresult.join('<br />') : "Deck is Valid");
   }
   
   
@@ -433,7 +444,7 @@ $(document).ready(function () {
 	
   function updateSets() {
     var outp = '';
-		var core = localStorage.getItem(LS_pre + '-core-count') == null ? 1 : localStorage.getItem(LS_pre + '-core-count');
+		var core = localStorage.getItem(LS_pre + 'core-count') == null ? 1 : localStorage.getItem(LS_pre + 'core-count');
     
     _cycles().order("position").each( function (cycle) {
       indent = false;
@@ -498,7 +509,7 @@ $(document).ready(function () {
 			if (set.code == 'core') {
 				setFilter.push ('core');
 			} else {
-				if (localStorage.getItem(LS_pre + '-' + set.code) == "true") {
+				if (localStorage.getItem(LS_pre + set.code) == "true" || localStorage.getItem(LS_pre + set.code) === null) {
 					setFilter.push (set.code)
 				}
 			}
