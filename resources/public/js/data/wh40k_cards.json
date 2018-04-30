@@ -12225,7 +12225,7 @@
     {
       "attack": 2,
       "code": "170021",
-      "command_icons": "none",
+      "command_icons": 0,
       "faction": "Space Marines",
       "faction_code": "space_marines",
       "hp": 6,
@@ -12707,7 +12707,7 @@
     {
       "attack": 1,
       "code": "180043",
-      "command_icons": "none",
+      "command_icons": 0,
       "faction": "Astra Militarum",
       "faction_code": "astra_militarum",
       "hp": 7,
@@ -13198,7 +13198,7 @@
     {
       "attack": 1,
       "code": "190065",
-      "command_icons": "none",
+      "command_icons": 0,
       "faction": "Necrons",
       "faction_code": "necrons",
       "hp": 8,
@@ -13576,7 +13576,7 @@
     {
       "attack": 2,
       "code": "200087",
-      "command_icons": "none",
+      "command_icons": 0,
       "faction": "Eldar",
       "faction_code": "eldar",
       "hp": 6,
@@ -14285,7 +14285,7 @@
     {
       "attack": 1,
       "code": "210109",
-      "command_icons": "none",
+      "command_icons": 0,
       "faction": "Chaos",
       "faction_code": "chaos",
       "hp": 8,
