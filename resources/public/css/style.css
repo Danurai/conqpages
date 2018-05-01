@@ -1,22 +1,24 @@
 /* Core Styles */  
 
 body { font-family: 'Exo 2', sans-serif; }
-a    { color: darkslategrey; }
+a    { color: darkslategrey; fill: darkslategrey; }
 
 .navbar-brand:hover,
 .navbar-nav > .nav-item > a:hover  
-  {background-color: lightseagreen;}
+  {background-color: lightseagreen; fill: lightseagreen;}
 
-.icon-sig                {color: gold;}
-.icon-loyal            {color: slateblue;}
+.icon-sig                {color: gold; fill: gold;}
+.icon-loyal            {color: slateblue; fill: slateblue;}
 
-.space_marines      {color: goldenrod;}
-.astra_militarum  {color: darkslategrey;}
-.orks                        {color: darkgreen;}
-.chaos                      {color: darkorange;}
-.dark_eldar            {color: purple;}
-.eldar                      {color: gold;}
-.tau                          {color: lightskyblue;}
-.tyrranids              {color: brown;}
-.necrons                  {color: teal;}
-.neutral                  {color: darkgray;}
+.icon-faction       {width: 1.5em;}
+
+.space_marines      {color: goldenrod; fill: goldenrod;}
+.astra_militarum  {color: darkslategrey; fill: darkslategrey;}
+.orks                        {color: darkgreen; fill: darkgreen; fill: darkgreen;}
+.chaos                      {color: darkorange; fill: darkorange; fill: darkorange;}
+.dark_eldar            {color: purple; fill: purple;}
+.eldar                      {color: gold; fill: gold;}
+.tau                          {color: lightskyblue; fill: lightskyblue;}
+.tyrranids              {color: brown; fill: brown;}
+.necrons                  {color: teal; fill: teal;}
+.neutral                  {color: darkgray; fill: darkgray;}

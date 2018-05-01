@@ -1,117 +1,64 @@
 (ns dansite.web
    (:require [clojure.java.io :as io]
              [clojure.data.json :as json]
-             [compojure.core :refer [defroutes GET POST ANY]]
+             [compojure.core :refer [defroutes GET POST ANY context]]
              [compojure.route :refer [not-found resources]]
              [ring.util.response :refer [response resource-response content-type redirect]]
              [ring.middleware.params :refer [wrap-params]]
              [ring.middleware.keyword-params :refer [wrap-keyword-params]]
              [ring.middleware.nested-params :refer [wrap-nested-params]]
              [ring.middleware.session :refer [wrap-session]]
-             [clojure.java.jdbc :as j]
              [cemerick.friend :as friend]
                (cemerick.friend [workflows :as workflows]
                               [credentials :as creds])
              [hiccup.page :as h]
              [dansite.misc :as misc]
-             [dansite.pages :as pages]))
-   
-(def cards (json/read-str (slurp (io/resource "public/js/data/wh40k_cards.json")) :key-fn keyword))
-            
-;; Database for saving and loading decks     
-(def db
-  {:classname   "org.sqlite.JDBC"
-   :subprotocol "sqlite"
-   :subname     "resources/db/conquestdb.sqlite3"
-   })
+             [dansite.pages :as pages]
+             [dansite.users :as users :refer [users]]))
 
-(defn- create-db []
-   (try (j/db-do-commands db
-            (j/create-table-ddl :decks
-               [[:name :text]
-                [:author :int]
-                [:data :blob]]))
-        (catch Exception e ())))
-           
-(defn update-or-insert!
-  "Updates columns or inserts a new row in the specified table"
-  [db table row where-clause]
-  (j/with-db-transaction [t-con db]
-    (let [result (j/update! t-con table row where-clause)]
-      (if (zero? (first result))
-        (j/insert! t-con table row)
-        result))))
-
-        
-(defn- save-data [name deck]
-   (create-db)
-   (update-or-insert! db :decks {:data deck :author 0 :name name} ["name = ?" name]))
-           
 (defn- save-deck-handler [name deck]
-  (save-data name deck)
+  ;(save-data name deck)
   (redirect "/decks")
-  )
-           
-; a dummy in-memory user "database"
-(def users {"root" {:username "root"
-                  :password (creds/hash-bcrypt "admin")
-                  :roles #{::admin}}
-           "dan"  {:username "dan"
-                  :password (creds/hash-bcrypt "user")
-                  :roles #{::user}}})          
-
-(derive ::admin ::user)
-   
+  ) 
+ 
+(defroutes deck-routes
+  (GET "/" []
+    pages/decklist)
+  (GET "/new" []
+    pages/newdeck)
+  (GET "/new/:id" []
+    pages/deckbuilder)
+  (GET "/edit" []
+    pages/deckbuilder))
+  
 (defroutes app-routes
   (GET "/" req
     (h/html5 
       misc/pretty-head
       [:body
         (misc/navbar req)]))
-  (GET "/decks" []
-    (friend/authorize #{::user}
-      pages/deckbuilder))
   (GET "/collection" []
     pages/collection)
+  (GET "/cards" []
+    pages/searchpage)  
   (GET "/find" [q]
-    (h/html5 
-      misc/pretty-head
-      [:body
-        (misc/navbar nil)
-        [:div.container.my-2
-          [:table.table.table-hover
-            [:thead [:tr [:td "Name"][:td "Faction"][:td "Type"][:td "Cost"][:td [:i.fas.fa-cog]][:td "Set"]]]
-            [:tbody
-              (map (fn [r]
-                [:tr
-                  [:td [:a.card-tooltip {:href (str "/card/" (:code r)) :data-code (:code r)} (:name r)]]
-                  [:td (:faction r)]
-                  [:td (:type r)]
-                  [:td (:cost r)]
-                  [:td {:title (:signature_loyal r)} (case (:signature_loyal r) "Signature" [:i.fas.fa-cog.icon-sig] "Loyal" [:i.fas-fa-crosshairs.icon-loyal] "")]
-                  [:td (str (:pack r) " #" (-> r :position Integer.))]
-                 ])
-                (->> cards :data (filter #(some? (re-find (re-pattern (str "(?i)" q)) (:name %))))))
-            ]]]]))
+    (pages/findcards q))
+  (GET "/pack/:id" [id]
+    (pages/searchattr (str "e:" id))) ;;TODO USE STANDARD pages/search response
   (GET "/card/:code{[0-9]+}" [code]
-    (h/html5 
-      misc/pretty-head
-      [:body
-        (misc/navbar nil)
-        [:div.container.my-2
-          ((fn [r]
-            [:div.row
-              [:div.col-sm
-                [:div.card  
-                  [:div.card-header [:h2 (:name r)]]
-                  [:div.card-body (:text r)]
-                  [:div.card-footer.text-muted.d-flex.justify-content-between
-                    [:span (:faction r)]
-                    [:span (str (:pack r) " #" (-> r :position Integer.))]]]]
-              [:div.col-sm
-                [:img {:src (:img r) :alt (:name r)}]]])
-            (->> cards :data (filter #(= (:code %) code)) first))
-        ]]))
+    (pages/card code))
+    
+  (context "/decks" []
+    ; (friend/wrap-authorize deck-routes #{::users/user}))
+    deck-routes)
+    
+  (context "/api/data" []
+    (GET "/cards" [] (content-type (response (slurp (io/resource "data/wh40k_cards.min.json"))) "application/json"))
+    (GET "/packs" [] (content-type (response (slurp (io/resource "data/wh40k_packs.min.json"))) "application/json"))
+    (GET "/cycles" [] (content-type (response (slurp (io/resource "data/wh40k_cycles.min.json"))) "application/json"))
+    (GET "/factions" [] (content-type (response (slurp (io/resource "data/wh40k_factions.min.json"))) "application/json"))
+    (GET "/types" [] (content-type (response (slurp (io/resource "data/wh40k_types.min.json"))) "application/json")))
+  
   (GET "/login" req
     (h/html5
       misc/pretty-head
@@ -133,6 +80,7 @@
                     [:button.btn.btn-warning.float-right {:type "submit"} "Login"]]]]]]]]))
   (friend/logout
     (ANY "/logout" [] (redirect "/")))
+    
   (POST "/decks/save" [deck-content deck-name]  (save-deck-handler deck-name deck-content) )
   ;; (GET "/card/:code{[0-9]+}" [code] (str "Hello " code))
   (resources "/"))
@@ -143,7 +91,7 @@
       {:allow-anon? true
        :login-uri "/login"
        :default-landing-uri "/"
-       :credential-fn #(creds/bcrypt-credential-fn users %)
+       :credential-fn #(creds/bcrypt-credential-fn @users %)
        :workflows [(workflows/interactive-form)]})
     (wrap-keyword-params)
     (wrap-params)

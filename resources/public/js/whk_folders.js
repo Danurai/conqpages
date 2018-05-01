@@ -22,15 +22,20 @@ $(document).ready(function () {
   
   
   // LOAD DATA
-  $.getJSON('js/data/wh40k_cycles.json', function (data) {      //,{_: new Date().getTime()}
+  //$.getJSON('js/data/wh40k_cycles.json', function (data) {      //,{_: new Date().getTime()}
+  $.getJSON('/api/data/cycles', function (data) {      //,{_: new Date().getTime()}
     _cycles = TAFFY(data.data);			//console.log (data.data);
-    $.getJSON('js/data/wh40k_packs.json', function (data) {
+  //  $.getJSON('js/data/wh40k_packs.json', function (data) {
+    $.getJSON('api/data/packs', function (data) {
       _packs = TAFFY(data.data);			//console.log(data.data);
-      $.getJSON('js/data/wh40k_factions.json', function (data) {
+  //    $.getJSON('js/data/wh40k_factions.json', function (data) {
+      $.getJSON('api/data/factions', function (data) {
         _factions = TAFFY(data.data);	// NOTE: data.data
-        $.getJSON('js/data/wh40k_types.json', function (data) {
+  //      $.getJSON('js/data/wh40k_types.json', function (data) {
+        $.getJSON('api/data/types', function (data) {
           _types = TAFFY(data.data);	// NOTE: data.data
-          $.getJSON('js/data/wh40k_cards.json', function (data) {
+  //        $.getJSON('js/data/wh40k_cards.json', function (data) {
+          $.getJSON('api/data/cards', function (data) {
             _cards = TAFFY(data.data);	//console.log(data);
             
             
