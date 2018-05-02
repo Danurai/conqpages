@@ -14,10 +14,10 @@
              [hiccup.page :as h]
              [dansite.misc :as misc]
              [dansite.pages :as pages]
-             [dansite.users :as users :refer [users]]))
+             [dansite.database :as db]))
 
-(defn- save-deck-handler [name deck]
-  ;(save-data name deck)
+(defn- save-deck-handler [name deck uid]
+  (db/save-deck name deck uid)
   (redirect "/decks")
   ) 
  
@@ -36,7 +36,13 @@
     (h/html5 
       misc/pretty-head
       [:body
-        (misc/navbar req)]))
+        (misc/navbar req)
+        [:div.container.my-2
+          [:ul
+            [:li [:span.h5 "Decks: "] "Create or Edit Deck Lists"]
+            [:li [:span.h5 "Cards: "] "View or search cards"]
+            [:li [:span.h5 "Collection: "] "Browse collection in virtual folders"]
+            ]]]))
   (GET "/collection" []
     pages/collection)
   (GET "/cards" []
@@ -49,8 +55,8 @@
     (pages/card code))
     
   (context "/decks" []
-    ; (friend/wrap-authorize deck-routes #{::users/user}))
-    deck-routes)
+    ;deck-routes)
+    (friend/wrap-authorize deck-routes #{::db/user}))
     
   (context "/api/data" []
     (GET "/cards" [] (content-type (response (slurp (io/resource "data/wh40k_cards.min.json"))) "application/json"))
@@ -78,11 +84,11 @@
                       [:label {:for "password"} "Password"]
                       [:input#userpassword.form-control {:type "password" :name "password" :placeholder "Password"}]]
                     [:button.btn.btn-warning.float-right {:type "submit"} "Login"]]]]]]]]))
+                    
   (friend/logout
     (ANY "/logout" [] (redirect "/")))
-    
-  (POST "/decks/save" [deck-content deck-name]  (save-deck-handler deck-name deck-content) )
-  ;; (GET "/card/:code{[0-9]+}" [code] (str "Hello " code))
+  ; TODO wrap-authorize?
+  (POST "/decks/save" [deck-content deck-name]  (save-deck-handler deck-name deck-content "10001") )
   (resources "/"))
    
 (def app 
@@ -91,7 +97,7 @@
       {:allow-anon? true
        :login-uri "/login"
        :default-landing-uri "/"
-       :credential-fn #(creds/bcrypt-credential-fn @users %)
+       :credential-fn #(creds/bcrypt-credential-fn (db/users) %)
        :workflows [(workflows/interactive-form)]})
     (wrap-keyword-params)
     (wrap-params)

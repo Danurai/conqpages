@@ -23,10 +23,12 @@
                [reagent-utils "0.2.1"]
                [com.cemerick/friend "0.2.3"]
                [org.clojure/java.jdbc "0.7.5"]
-               [org.xerial/sqlite-jdbc "3.7.2"]]
+               [org.xerial/sqlite-jdbc "3.7.2"]
+               [org.postgresql/postgresql "9.4-1201-jdbc41"]]
 
   :plugins [[lein-figwheel "0.5.14"]
-           [lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]]
+            [lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
+            [lein-autoexpect "1.9.0"]]
 
   :source-paths ["src/clj"]
 
@@ -62,6 +64,7 @@
                        :source-paths ["src/clj"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]}
              :dev {:dependencies [[reloaded.repl "0.2.4"]
+                                  [expectations "2.2.0-rc3"]
                                   [figwheel-sidecar "0.5.14"]
                                   [binaryage/devtools "0.9.4"]
                                   [com.cemerick/piggieback "0.2.2"]]
