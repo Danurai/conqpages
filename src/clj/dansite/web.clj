@@ -18,8 +18,7 @@
 
 (defn- save-deck-handler [name deck uid]
   (db/save-deck name deck uid)
-  (redirect "/decks")
-  ) 
+  (redirect "/decks"))
  
 (defroutes deck-routes
   (GET "/" []
@@ -88,7 +87,8 @@
   (friend/logout
     (ANY "/logout" [] (redirect "/")))
   ; TODO wrap-authorize?
-  (POST "/decks/save" [deck-content deck-name]  (save-deck-handler deck-name deck-content "10001") )
+  (POST "/decks/save" [deck-content deck-name]  
+    (friend/wrap-authorize #(save-deck-handler deck-name deck-content (-> % db/get-authentications :uid)) #{::db/user}))
   (resources "/"))
    
 (def app 

@@ -1,6 +1,7 @@
 (ns dansite.pages
   (:require
     [hiccup.page :as h]
+    [clojure.data.json :as json]
     [cemerick.friend :as friend]
     [dansite.misc :as misc]
     [dansite.tools :refer [cardfilter attrfilter]]))
@@ -73,7 +74,7 @@
                 [:div.h5 "Empty Deck"]]
               [:div.row-fluid.my-1.border-dark.border-top
                 [:form#save_form.form.needs-validation {:method "post" :action "/decks/save" :role "form" :novalidate true}
-                  [:input#deck-content {:type "text" :name "deck-content" :value (-> req :params :id misc/sig-squad) :hidden true}]
+                  [:input#deck-content {:type "text" :name "deck-content" :value (-> req :params :id misc/signature-squad-decklist json/write-str)}] ; :hidden true}]
                   [:div.form-group
                     [:label {:for "#deck-name" :required true} "Army Name"]
                     [:input#deck-name.form-control {:type "text" :name "deck-name" :placeholder "New Deck" :required true}]

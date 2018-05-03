@@ -81,6 +81,7 @@
                 [:div.dropdown-menu {:aria-labelledby "userDropdown"}
                   [:a.dropdown-item {:href "/login"} "Login"]])]]]])
 
+                  
 (defn signature-id [id]
   (->> cards
       :data
