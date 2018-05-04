@@ -29,6 +29,7 @@
     [:script {:src "https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.js"}]
   ;; TAFFY JQuery database
     [:script {:src "https://cdnjs.cloudflare.com/ajax/libs/taffydb/2.7.2/taffy-min.js"}]
+  
   ;; Site Specific CSS
     (h/include-css "/css/style.css")
     (h/include-css "https://fonts.googleapis.com/css?family=Exo+2")   ;; <link href="https://fonts.googleapis.com/css?family=Aldrich|Electrolize|Exo|Exo+2|Jura|Mina|Play|Rationale|Sarpanch" rel="stylesheet">
@@ -82,6 +83,9 @@
                   [:a.dropdown-item {:href "/login"} "Login"]])]]]])
 
                   
+(defn get-authentications [req]
+  (#(-> (friend/identity %) :authentications (get (:current (friend/identity %)))) req))
+                  
 (defn signature-id [id]
   (->> cards
       :data
@@ -111,7 +115,9 @@
            (filter #(= (:signature_squad %) signature))
            (sort-by :code)
            (map :quantity)))))
-      
+
+(defn faction-code [id]
+  (->> cards :data (filter #(= (:code %) id)) first :faction_code))        
          
 (def svg 
   {

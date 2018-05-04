@@ -16,8 +16,9 @@
              [dansite.pages :as pages]
              [dansite.database :as db]))
 
-(defn- save-deck-handler [name deck uid]
-  (db/save-deck name deck uid)
+(defn- save-deck-handler [id name decklist tags notes req]
+  (println (str "Saved deck id "
+    (db/save-deck id name decklist tags notes (-> req misc/get-authentications :uid))))
   (redirect "/decks"))
  
 (defroutes deck-routes
@@ -27,7 +28,7 @@
     pages/newdeck)
   (GET "/new/:id" []
     pages/deckbuilder)
-  (GET "/edit" []
+  (GET "/edit/:id" []
     pages/deckbuilder))
   
 (defroutes app-routes
@@ -87,8 +88,8 @@
   (friend/logout
     (ANY "/logout" [] (redirect "/")))
   ; TODO wrap-authorize?
-  (POST "/decks/save" [deck-content deck-name]  
-    (friend/wrap-authorize #(save-deck-handler deck-name deck-content (-> % db/get-authentications :uid)) #{::db/user}))
+  (POST "/decks/save" [deck-id deck-name deck-content deck-tags deck-notes]  
+    (friend/wrap-authorize #(save-deck-handler deck-id deck-name deck-content deck-tags deck-notes %) #{::db/user}))
   (resources "/"))
    
 (def app 

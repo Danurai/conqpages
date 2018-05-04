@@ -14,45 +14,45 @@
              :subname     "resources/db/db.sqlite3"}))
       
 (defn create-db []
-  (if (= (:subprotocol db) "sqlite") ; Split for AUTOINCREMENT
-  ; Create User Tbale in SQLITE
+  (if (= (:subprotocol db) "sqlite") ; Split for AUTOINCREMENT / NEXTVAL
+  ; Create User table in SQLITE
       (try
         (j/db-do-commands db 
           (j/create-table-ddl :users
-            [[:uid      :INTEGER :PRIMARY :KEY :AUTOINCREMENT]
-             [:username :TEXT]
-             [:password :TEXT]
-             [:admin    :BOOLEAN]
-             [:created  :DATE]]))
+            [[:uid      :integer :primary :key :AUTOINCREMENT]
+             [:username :text]
+             [:password :text]
+             [:admin    :boolean]
+             [:created  :date]]))
         (j/insert! db :sqlite_sequence {:name "users" :seq 1000})
         (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (java.time.LocalDateTime/now)})
         (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (java.time.LocalDateTime/now)})
-        ;   ["INSERT INTO sqlite_sequence VLAUES seq = 1000 WHERE name = \"users\""])
         (catch Exception e (println (str "DB Error - Users: " e))))
   ; Create User Table in postgresql
       (try
         (j/db-do-commands db ["CREATE SEQUENCE user_uid_seq MINVALUE 1000"])
         (j/db-do-commands db 
           (j/create-table-ddl :users
-            [[:uid      :INTEGER :PRIMARY :KEY "NEXTVAL('user_uid_seq')"]
-             [:username :TEXT]
-             [:password :TEXT]
-             [:admin    :BOOLEAN]
-             [:created  :DATE]]))
+            [[:uid      :integer :primary :key "NEXTVAL('user_uid_seq')"]
+             [:username :text]
+             [:password :text]
+             [:admin    :boolean]
+             [:created  :date]]))
         (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (java.time.LocalDateTime/now)})
         (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (java.time.LocalDateTime/now)})
-        ;   ["INSERT INTO sqlite_sequence VLAUES seq = 1000 WHERE name = \"users\""])
         (catch Exception e (println (str "DB Error - Users: " e)))))
   ; Create Database Table and a sample deck
   (try
     (j/db-do-commands db
       (j/create-table-ddl :decklists
-        [[:uid     :TEXT :PRIMARY :KEY]
-         [:name    :TEXT]
-         [:author  :INTEGER]
-         [:data    :BLOB]
-         [:created :DATE]
-         [:updated :DATE]]))
+        [[:uid         :text :primary :key]
+         [:name        :text]
+         [:author      :integer]
+         [:data        :blob]
+         [:tags        :text]
+         [:notes       :text]
+         [:created     :date]
+         [:updated     :date]]))
     (j/insert! db :decklists {:uid "010101" :name "Marine Corps" :author 1001
       :data "{\"010001\" 1}" 
       :created (java.time.LocalDateTime/now) :updated (java.time.LocalDateTime/now)})
@@ -60,9 +60,9 @@
   (try
     (j/db-do-commands db
       (j/create-table-ddl :version
-        [[:major :int]
-         [:minor :int]
-         [:note :text]
+        [[:major    :int]
+         [:minor    :int]
+         [:note     :text]
          [:released :date]]))
     (j/insert! db :version {:major 0 :minor 1 :note "dev" :released (java.time.LocalDateTime/now)})
     (catch Exception e (str "DB Error - version: " e))))
@@ -76,6 +76,8 @@
 
 (defn get-authentications [req]
   (#(-> (friend/identity %) :authentications (get (:current (friend/identity %)))) req))
+
+; DECKS
   
 (defn update-or-insert!
   "Updates columns or inserts a new row in the specified table"
@@ -102,10 +104,18 @@
           (recur)
           uid)))))
             
-(defn save-deck [deckid deckname decklist userid]
-   (update-or-insert! db :decklists { :uid deckid :name deckname :data decklist :author userid :updated (java.time.LocalDateTime/now)} ["uid = ?" deckid]))
-
-(defn decks [uid]
-  (j/query db ["SELECT * FROM decklists WHERE author = ?" uid]))
+(defn save-deck [id name decklist tags notes uid]
+  (let [deckid (if (clojure.string/blank? id) (unique-deckid) id)
+        qry    {:uid deckid :name name :data decklist :tags tags :notes notes :author uid :updated (java.time.LocalDateTime/now)}
+        where-clause ["uid = ?" deckid]]
+    (j/with-db-transaction [t-con db]
+      (let [result (j/update! t-con :decklists qry where-clause)]
+        (if (zero? (first result))
+          (j/insert! t-con :decklists (assoc qry :created (java.time.LocalDateTime/now) :updated (java.time.LocalDateTime/now)))
+          result)))))
+    
+    
+(defn get-user-decks [uid]
+  (j/query db ["SELECT * FROM decklists WHERE author = ? ORDER BY UPDATED DESC" uid]))
   
   
