@@ -4,50 +4,61 @@ var _cards;
 
 $(document).ready(function () {
   
+  var decklist = TAFFY();
+  
   var filter = {};
   var typFilter = ["army_unit"];
   var facFilter = [];
   var setFilter = [];
-  
-  var LS_pre = 'whk-pack-';    // Local Storage Prefix
   
   var _planets;
   var _sets;
   var _cycles;
   var _factions;
   
-  var decklist = TAFFY();
+  var LS_pre = 'whk-pack-';    // Local Storage Prefix
+  
+  var typeicon = {
+    warlord_unit: '<i class="fas fa-user-circle"></i>',
+    army_unit:    '<i class="fas fa-users"></i>',
+    attachment:   '<i class="fas fa-user-plus"></i>',
+    event:        '<i class="fas fa-bolt"></i>',
+    support:      '<i class="fas fa-hands-helping"></i>',
+    synapse_unit: '<i class="fas fa-dna"></i>'
+    }
+  
+// Markdown
+  var converter = new showdown.Converter()
   
 /* INITIALISATION */
-  $.getJSON("/api/data/cards", function (data) {   //,{_: new Date().getTime()}
-    _cards = TAFFY(data.data);
-    _planets = JSON.parse(_cards({"type_code":"planet"}).stringify());
-    
-    $.getJSON("/api/data/factions", function (data) {
-      _factions = TAFFY(data.data);
-      
-      $.getJSON("/api/data/cycles", function (data) {
-        _cycles = TAFFY(data.data);
-        
-        $.getJSON("/api/data/packs", function (data) {
-          _sets = TAFFY(data.data);
-          
-          // $('#deck-content').val('[{"code":"010001","qty":1},{"code":"010009","qty":1},{"code":"010008","qty":4},{"code":"010011","qty":1},{"code":"010010","qty":2},{"code":"010015","qty":2},{"code":"010016","qty":1},{"code":"010023","qty":1},{"code":"010020","qty":1},{"code":"010014","qty":1},{"code":"010021","qty":1},{"code":"010017","qty":1},{"code":"010022","qty":1},{"code":"010013","qty":2},{"code":"010018","qty":1},{"code":"010019","qty":1},{"code":"010012","qty":1},{"code":"010027","qty":1},{"code":"010028","qty":1},{"code":"010024","qty":1},{"code":"010026","qty":1},{"code":"010025","qty":1},{"code":"010029","qty":1},{"code":"010030","qty":1},{"code":"010174","qty":1},{"code":"010172","qty":1},{"code":"010169","qty":1},{"code":"010173","qty":1},{"code":"010040","qty":1},{"code":"010046","qty":1},{"code":"010045","qty":2},{"code":"010039","qty":1},{"code":"010044","qty":1},{"code":"010035","qty":2},{"code":"010037","qty":1},{"code":"010041","qty":1},{"code":"010049","qty":1},{"code":"010170","qty":1},{"code":"010048","qty":1},{"code":"010053","qty":1},{"code":"010051","qty":1},{"code":"010171","qty":1}]');
-          updateSets();
+  $.getJSON("/api/data/cards", function (data) { _cards = TAFFY(data.data);   //,{_: new Date().getTime()} to force update
+    $.getJSON("/api/data/factions", function (data) { _factions = TAFFY(data.data);
+      $.getJSON("/api/data/cycles", function (data) { _cycles = TAFFY(data.data);
+        $.getJSON("/api/data/packs", function (data) { _sets = TAFFY(data.data);
+          _planets = JSON.parse(_cards({"type_code":"planet"}).stringify());
+          writeSets();
           loadDeck();
           writedeck();
-          writeoutput();
-          
           updateTableBody();
         });
       });
     });
   });
+  
+  function loadDeck() {
+    if ($.parseJSON($('#deck-content').val() != "")) {
+      var deck = $.parseJSON($('#deck-content').val());
+      $.each(deck, function(key, val) {
+        card = _cards({"code":key}).first();
+        card.qty = val;
+        decklist.insert(card);
+      });
+    }
+    $('#tags').val ($('#deck-tags').val())
+    $('#notes').val ($('#deck-notes').val())
+  }
 
 /* Decklist Listeners*/
-  function validateSaveForm() {
-    
-  }
   $(document).on('click','.card-tooltip',function (e) {
     e.preventDefault();
     var outp = '';
@@ -88,19 +99,8 @@ $(document).ready(function () {
     updateDeck(this.name.substring(4), parseInt($(this).val(),10));
     $('#cardmodal').modal('hide');
   });
-  $('#deck-name').on('change', function () {
-    writeoutput();
-  });
-  $('#newdeck').on('click',function() {
-    if (confirm("Are you sure you want to create a new deck?")) {
-      decklist().remove();
-      writedeck();
-      writeoutput();
-      updateTableBody();
-    }
-  });
-
-/* BUILD TAB */
+  
+  /* BUILD TAB */
 
   $('#tablebody').on('change','input[type=radio]:enabled',function() {
     updateDeck(this.name.substring(4), parseInt($(this).val(),10));
@@ -141,22 +141,12 @@ $(document).ready(function () {
     }
     updateTableBody();
   });
+  
   $('#filterlist').on('input', function () {
     updateTableBody()
   });
 
-  // Deck Format
-  
-  function loadDeck() {
-    if ($.parseJSON($('#deck-content').val() != "")) {
-      var deck = $.parseJSON($('#deck-content').val());
-      $.each(deck, function(id,item) {
-        card = _cards({"code":item.code}).first();
-        card.qty = item.qty;
-        decklist.insert(card);
-      })
-    }
-  }
+  // Deck Format  
   
   function updateDeck(cardcode, cardqty)  {
     var card = _cards({"code":cardcode}).first();
@@ -180,15 +170,14 @@ $(document).ready(function () {
         if (card.qty>0) {decklist.insert(card);}
     }
     
-    //console.log (decklist().stringify());
-    
     writedeck();
-    writeoutput();
     updateTableBody();
   }
   
   function updateTableBody() {
-    
+  
+  // Build Filter, clear and re-write 
+  
     var faction_code = decklist({"type_code":"warlord_unit"}).first().faction_code;
     if (typeof faction_code == 'undefined') { faction_code = ""; }
     // Filter Buttons
@@ -206,8 +195,7 @@ $(document).ready(function () {
           $($(lbl).find('input')[0]).prop('checked', false);
         } 
       });
-    } 
-    
+    }  
     
     //default exclude planet and token
     filter = {"type_code":["army_unit","warlord_unit","attachment","event","synapse_unit","support"]};
@@ -295,17 +283,8 @@ $(document).ready(function () {
     if (faction_code != "") {ally_codes.push(faction_code)};    
     return ally_codes;
   }
-  var typeicon = {
-    warlord_unit: '<i class="fas fa-user-circle"></i>',
-    army_unit:    '<i class="fas fa-users"></i>',
-    attachment:   '<i class="fas fa-user-plus"></i>',
-    event:        '<i class="fas fa-bolt"></i>',
-    support:      '<i class="fas fa-hands-helping"></i>',
-    synapse_unit: '<i class="fas fa-dna"></i>'
-    }
   
-    
-  
+// Write Deklist, update charts and sample draw
   function writedeck()  {
     var outp = '';
     var faction; 
@@ -358,31 +337,13 @@ $(document).ready(function () {
     
     updateCharts();
     
-    // Game Prep
-    var content = '';
+    // update deck-content for saving and newGame
+    var deck_data = {};
     decklist().each(function(card) {
-      content += '{"code":"' + card.code + '","qty":' + card.qty + '},';
-    })
-    
-    $('#deck-content').val('[' + content.slice(0,-1) + ']');
-    newGame();
-  }
-  function writeoutput() {
-    var exp = '';
-    var n = 0;
-    
-    exp = $('#deck-name').val() + '\n\n';
-    exp += '\nTotal Cards: (' + decklist({"type_code":{"!is":"warlord_unit"}}).sum("qty") + ')';
-    $.each(["Warlord Unit","Army Unit","Synapse Unit","Attachment","Event","Support",],function (id,type) {
-      n = decklist({"type":type}).sum("qty");
-      if (n > 0) {
-        exp += '\n\n' + type + ': (' + n + ')';
-        decklist({"type":type}).order("name").each(function (card) {
-          exp += '\n' + card.qty + 'x ' + card.name + ' (' + card.pack + ')'
-        });
-      }
+      deck_data[card.code] = card.qty;
     });
-    $('#deckload').val(exp);
+    $('#deck-content').val(JSON.stringify(deck_data));    
+    newGame();
   }
   function checkValidity()  {
     // Returns html formatted string
@@ -422,20 +383,30 @@ $(document).ready(function () {
     }
     return (validresult.length > 0 ? validresult.join('<br />') : "Deck is Valid");
   }
-  
+
+/* NOTES TAB */
+  $('#tags').on('change',function () {
+    $('#deck-tags').val ($(this).val());
+  });
+  $('#notes').on('keyup',function () {
+    $('#deck-notes').val ($(this).val());
+    $('#notes-preview').html (converter.makeHtml($(this).val()));
+  });
   
 /* SETS TAB */
   // SETS: Json {Set: {code: code: number: number}}
   // <div id="setlist"></div>
   
   $('#setlist')
-    .on('change','input[type=radio]',function() {
+    .on('change','input[type=radio]',function() { // Core Sets
       localStorage.setItem($(this).attr('name'),$(this).val());
       updateSetFilter();
+      updateTableBody();
     })
-    .on('click','input.pack',function () {
+    .on('click','input.pack',function () { // Pack
       localStorage.setItem("whk-pack-" + $(this).data('code'),$(this).prop('checked').toString() );
       updateSetFilter();
+      updateTableBody();
     })
   // Parent/child checkboxes
     .on("click","div.form-check.pa",function()  {
@@ -448,16 +419,17 @@ $(document).ready(function () {
         localStorage.setItem("whk-pack-" + packcode,checkchild);
       });
       updateSetFilter();
+      updateTableBody();
     })
     .on("click","div.form-check.ch",function()  {
       var checkpar = $(this).parent().find("input[type='checkbox']:checked").length == $(this).parent().find("input[type='checkbox']").length;
       var cyclecode = $(this).find("input[type='checkbox']").data("cycle");
       $(this).parent().parent().find("div.form-check.pa [data-cycle='" + cyclecode + "']input[type='checkbox']").prop("checked",checkpar);
-      updateSetFilter();
+      // updateSetFilter(); triggered by .on('click','input.pack',function ()
     });
     
   
-  function updateSets() {
+  function writeSets() {
     var outp = '';
     var core = localStorage.getItem(LS_pre + 'core-count') == null ? 1 : localStorage.getItem(LS_pre + 'core-count');
     
@@ -513,7 +485,6 @@ $(document).ready(function () {
         }
       });
     }
-    
     updateSetFilter();
   }
   
@@ -530,8 +501,6 @@ $(document).ready(function () {
       }
     });
     filter['setcode'] = setFilter;
-    //console.log (filter);
-    updateTableBody();
   }
     
 /* CHECK TAB */
@@ -548,9 +517,8 @@ $(document).ready(function () {
     $('#draw2').prop('disabled',deck.length < 2);
     $('#draw7').prop('disabled',deck.length < 7);
   });
-  
-  // Make cards 50% opaque when clicked
   $('#hand').on('click','.check_card',function() {
+  // Make cards 50% opaque when clicked
     $(this).css('opacity', 1.5 - parseFloat($(this).css('opacity')));
   })
   
@@ -572,16 +540,6 @@ $(document).ready(function () {
     drawPlanets();
   }
   
-  function drawPlanets()  {
-    var outp = '';
-    
-    _cards({"type_code":"planet"}).each( function (r) {
-      outp += '<img src = "' + r.img + '" class="deck_card_planet" data-code="' + r.code + '"></img>';
-    });
-    
-    $('#planets').html (outp);
-  }
-  
   function drawCards(n) {
     var card;
     n = Math.min(n, deck.length);
@@ -590,10 +548,15 @@ $(document).ready(function () {
       $('#hand').append('<img src="' + card.img + '" class="check_card deck_card" data-code="' + card.code + '"></img>');
     }
   }
-
+  function drawPlanets()  {
+    var outp = '';
+    _cards({"type_code":"planet"}).each( function (r) {
+      outp += '<img src = "' + r.img + '" class="deck_card_planet" data-code="' + r.code + '"></img>';
+    });
+    $('#planets').html (outp);
+  }
   
-/* STATS TAB */
-  // Code to compile data and call Charts scripts
+// Code to compile data and call Charts scripts
   function updateCharts()  {
     //barIcons();
     lineCost();
@@ -738,7 +701,24 @@ $(document).ready(function () {
   
 
 /* LOAD TAB */
-
+/*
+  function writeoutput() {
+    var exp = '';
+    var n = 0;
+    
+    exp = $('#deck-name').val() + '\n\n';
+    exp += '\nTotal Cards: (' + decklist({"type_code":{"!is":"warlord_unit"}}).sum("qty") + ')';
+    $.each(["Warlord Unit","Army Unit","Synapse Unit","Attachment","Event","Support",],function (id,type) {
+      n = decklist({"type":type}).sum("qty");
+      if (n > 0) {
+        exp += '\n\n' + type + ': (' + n + ')';
+        decklist({"type":type}).order("name").each(function (card) {
+          exp += '\n' + card.qty + 'x ' + card.name + ' (' + card.pack + ')'
+        });
+      }
+    });
+    $('#deckload').val(exp);
+  }
   $('#deckload').on("mouseenter",function () {
     $(this).qtip({
       overwrite: false,
@@ -796,7 +776,9 @@ $(document).ready(function () {
     
     newGame();
   });
-      
+  */
+  
+  // Form Validation
   (function() {
     'use strict';
     window.addEventListener('load', function() {
