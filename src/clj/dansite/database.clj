@@ -33,7 +33,7 @@
         (j/db-do-commands db ["CREATE SEQUENCE user_uid_seq MINVALUE 1000"])
         (j/db-do-commands db 
           (j/create-table-ddl :users
-            [[:uid      :integer :primary :key "nextval('user_uid_seq')"]
+            [[:uid      :integer (str "primary key nextval('user_uid_seq')")]
              [:username :text]
              [:password :text]
              [:admin    :boolean]
