@@ -1,6 +1,7 @@
 (ns dansite.database
   (:require 
     [clojure.java.jdbc :as j]
+    [clj-time.core :as t]
     [cemerick.friend :as friend]
       (cemerick.friend [credentials :as creds])))
 
@@ -25,21 +26,21 @@
              [:admin    :boolean]
              [:created  :date]]))
         (j/insert! db :sqlite_sequence {:name "users" :seq 1000})
-        (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (java.time.LocalDateTime/now)})
-        (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (java.time.LocalDateTime/now)})
+        (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (t/now)})
+        (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (t/now)})
         (catch Exception e (println (str "DB Error - Users: " e))))
   ; Create User Table in postgresql
       (try
         (j/db-do-commands db ["CREATE SEQUENCE user_uid_seq MINVALUE 1000"])
         (j/db-do-commands db 
           (j/create-table-ddl :users
-            [[:uid      :integer :primary :key "NEXTVAL('user_uid_seq')"]
+            [[:uid      :int :not :null :default "nextval ('user_uid_seq')"]
              [:username :text]
              [:password :text]
              [:admin    :boolean]
-             [:created  :date]]))
-        (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (java.time.LocalDateTime/now)})
-        (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (java.time.LocalDateTime/now)})
+             [:created  :timestamp]]))
+        (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (t/now)})
+        (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (t/now)})
         (catch Exception e (println (str "DB Error - Users: " e)))))
   ; Create Database Table and a sample deck
   (try
@@ -51,11 +52,11 @@
          [:data        :blob]
          [:tags        :text]
          [:notes       :text]
-         [:created     :date]
-         [:updated     :date]]))
-    (j/insert! db :decklists {:uid "010101" :name "Marine Corps" :author 1001
-      :data "{\"010001\" 1}" 
-      :created (java.time.LocalDateTime/now) :updated (java.time.LocalDateTime/now)})
+         [:created     :timestamp]
+         [:updated     :timestamp]]))
+    ; (j/insert! db :decklists {:uid "010101" :name "Marine Corps" :author 1001
+    ;  :data "{\"010001\" 1}" 
+    ;  :created (t/now) :updated (t/now)})
     (catch Exception e (println (str "DB Error - Decklists: " e))))
   (try
     (j/db-do-commands db
@@ -63,8 +64,8 @@
         [[:major    :int]
          [:minor    :int]
          [:note     :text]
-         [:released :date]]))
-    (j/insert! db :version {:major 0 :minor 1 :note "dev" :released (java.time.LocalDateTime/now)})
+         [:released :timestamp]]))
+    (j/insert! db :version {:major 0 :minor 1 :note "dev" :released (t/now)})
     (catch Exception e (str "DB Error - version: " e))))
 
 ; USERS
@@ -106,12 +107,12 @@
             
 (defn save-deck [id name decklist tags notes uid]
   (let [deckid (if (clojure.string/blank? id) (unique-deckid) id)
-        qry    {:uid deckid :name name :data decklist :tags tags :notes notes :author uid :updated (java.time.LocalDateTime/now)}
+        qry    {:uid deckid :name name :data decklist :tags tags :notes notes :author uid :updated (t/now)}
         where-clause ["uid = ?" deckid]]
     (j/with-db-transaction [t-con db]
       (let [result (j/update! t-con :decklists qry where-clause)]
         (if (zero? (first result))
-          (j/insert! t-con :decklists (assoc qry :created (java.time.LocalDateTime/now) :updated (java.time.LocalDateTime/now)))
+          (j/insert! t-con :decklists (assoc qry :created (t/now) :updated (t/now)))
           result)))))
     
     

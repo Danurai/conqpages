@@ -3,6 +3,7 @@
     [hiccup.page :as h]
     [clojure.data.json :as json]
     [cemerick.friend :as friend]
+    [clj-time.coerce :as c]
     [dansite.misc :as misc]
     [dansite.database :as db :refer [get-user-decks]]
     [dansite.tools :refer [cardfilter attrfilter]]))
@@ -41,8 +42,8 @@
                                [:a {:href"#"} (:name r)]]) cards-in-deck) ]
           [:div.col-sm-6]]
         [:div.row.mb-2
-          [:div.small.col-sm-12.text-muted (str "Created on " (-> deck :created .toString))]
-          [:div.small.col-sm-12.text-muted (str "Updated on " (-> deck :updated .toString))]]
+          [:div.small.col-sm-12.text-muted (str "Created on " (-> deck :created c/from-long))]
+          [:div.small.col-sm-12.text-muted (str "Updated on " (-> deck :updated c/from-long))]]
         [:div.row.mb-2
           [:div.col-sm-12
             [:a.btn.btn-sm.btn-primary.mr-1 {:href (str "/deck/edit/" (:uid deck))} [:i.fas.fa-edit.mr-1] "Edit"]
@@ -114,7 +115,7 @@
                 [:div.h5 "Empty Deck"]]
               [:div.row-fluid.my-1.border-dark.border-top
                 [:form#save_form.form.needs-validation {:method "post" :action "/decks/save" :role "form" :novalidate true}
-                  [:input#deck-id {:type "text" :name "deck-id"}] ; :hidden true}]
+                  [:input#deck-id {:type "text" :name "deck-id" :hidden true}]
                   [:input#deck-content {:type "text" :name "deck-content" :value (-> req :params :id misc/signature-squad-decklist json/write-str) :hidden true}]
                   [:input#deck-tags {:type "text" :name "deck-tags" :value (-> req :params :id misc/faction-code) :hidden true}]
                   [:input#deck-notes {:type "text" :name "deck-notes" :hidden true}]
