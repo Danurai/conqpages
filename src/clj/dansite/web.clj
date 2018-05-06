@@ -17,8 +17,8 @@
              [dansite.database :as db]))
 
 (defn- save-deck-handler [id name decklist tags notes req]
-  (println (str "Saved deck id "
-    (db/save-deck id name decklist tags notes (-> req misc/get-authentications :uid))))
+  (println (str "Saved deck id " 
+    (first (db/save-deck id name decklist tags notes (-> req misc/get-authentications :uid)))))
   (redirect "/decks"))
  
 (defroutes deck-routes

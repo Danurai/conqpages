@@ -59,6 +59,8 @@
         [:div.row
           [:div.col-md-8
             [:div.accordian
+              [:div.card
+                [:div.card-header "Your Army Roster"]]
               (map #(deck-card %) (db/get-user-decks (-> req misc/get-authentications :uid)))]]
           [:div.col-md-4
             [:a.btn.btn-primary.m-2 {:href "/decks/new"} "New Deck"]

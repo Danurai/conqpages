@@ -2,6 +2,7 @@
   (:require 
     [clojure.java.jdbc :as j]
     [clj-time.core :as t]
+    [clj-time.coerce :as c]
     [cemerick.friend :as friend]
       (cemerick.friend [credentials :as creds])))
 
@@ -13,6 +14,14 @@
             {:classname   "org.sqlite.JDBC"
              :subprotocol "sqlite"
              :subname     "resources/db/db.sqlite3"}))
+
+; Local postgresql for testing
+;(def db {:dbtype "postgresql"
+;         :dbname "conq_db"
+;         :host "localhost"
+;         :port "5432"
+;         :user "conq_user"
+;         :password "user"})
       
 (defn create-db []
   (if (= (:subprotocol db) "sqlite") ; Split for AUTOINCREMENT / NEXTVAL
@@ -31,16 +40,16 @@
         (catch Exception e (println (str "DB Error - Users: " e))))
   ; Create User Table in postgresql
       (try
-        (j/db-do-commands db ["CREATE SEQUENCE user_uid_seq MINVALUE 1000"])
+        (j/db-do-commands db ["create sequence user_uid_seq minvalue 1000"])
         (j/db-do-commands db 
           (j/create-table-ddl :users
-            [[:uid      :int :not :null :default "nextval ('user_uid_seq')"]
+            [[:uid      :int :default "nextval ('user_uid_seq')"]
              [:username :text]
              [:password :text]
              [:admin    :boolean]
-             [:created  :timestamp]]))
-        (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (t/now)})
-        (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (t/now)})
+             [:created  :bigint]]))
+        (j/insert! db :users {:username "root" :password (creds/hash-bcrypt "admin") :admin true  :created (c/to-long (t/now))})
+        (j/insert! db :users {:username "dan"  :password (creds/hash-bcrypt "user")  :admin false :created (c/to-long (t/now))})
         (catch Exception e (println (str "DB Error - Users: " e)))))
   ; Create Database Table and a sample deck
   (try
@@ -49,14 +58,14 @@
         [[:uid         :text :primary :key]
          [:name        :text]
          [:author      :integer]
-         [:data        :blob]
+         [:data        :text]
          [:tags        :text]
          [:notes       :text]
-         [:created     :timestamp]
-         [:updated     :timestamp]]))
+         [:created     :bigint]
+         [:updated     :bigint]]))
     ; (j/insert! db :decklists {:uid "010101" :name "Marine Corps" :author 1001
     ;  :data "{\"010001\" 1}" 
-    ;  :created (t/now) :updated (t/now)})
+    ;  :created (c/to-long t/now) :updated (c/to-long t/now)})
     (catch Exception e (println (str "DB Error - Decklists: " e))))
   (try
     (j/db-do-commands db
@@ -64,8 +73,8 @@
         [[:major    :int]
          [:minor    :int]
          [:note     :text]
-         [:released :timestamp]]))
-    (j/insert! db :version {:major 0 :minor 1 :note "dev" :released (t/now)})
+         [:released :bigint]]))
+    (j/insert! db :version {:major 0 :minor 1 :note "dev" :released (c/to-long (t/now))})
     (catch Exception e (str "DB Error - version: " e))))
 
 ; USERS
@@ -107,12 +116,12 @@
             
 (defn save-deck [id name decklist tags notes uid]
   (let [deckid (if (clojure.string/blank? id) (unique-deckid) id)
-        qry    {:uid deckid :name name :data decklist :tags tags :notes notes :author uid :updated (t/now)}
+        qry    {:uid deckid :name name :data decklist :tags tags :notes notes :author uid :updated (c/to-long (t/now))}
         where-clause ["uid = ?" deckid]]
     (j/with-db-transaction [t-con db]
       (let [result (j/update! t-con :decklists qry where-clause)]
         (if (zero? (first result))
-          (j/insert! t-con :decklists (assoc qry :created (t/now) :updated (t/now)))
+          (j/insert! t-con :decklists (assoc qry :created (c/to-long (t/now)) :updated (c/to-long (t/now))))
           result)))))
     
     
