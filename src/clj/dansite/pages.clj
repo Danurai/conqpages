@@ -5,7 +5,7 @@
     [cemerick.friend :as friend]
     [clj-time.coerce :as c]
     [dansite.misc :as misc]
-    [dansite.database :as db :refer [get-user-decks]]
+    [dansite.database :as db :refer [get-user-decks get-user-deck]]
     [dansite.tools :refer [cardfilter attrfilter]]))
 
 (defn- icon-svg [faction_code]
@@ -46,25 +46,41 @@
           [:div.small.col-sm-12.text-muted (str "Updated on " (-> deck :updated c/from-long))]]
         [:div.row.mb-2
           [:div.col-sm-12
-            [:a.btn.btn-sm.btn-primary.mr-1 {:href (str "/deck/edit/" (:uid deck))} [:i.fas.fa-edit.mr-1] "Edit"]
-            [:button.btn.btn-sm.btn-danger.mr-1 {:href "#"} [:i.fas.fa-times.mr-1] "Delete"]]]
+            [:a.btn.btn-sm.btn-primary.mr-1 {:href (str "/decks/edit/" (:uid deck))} [:i.fas.fa-edit.mr-1] "Edit"]
+            [:button.btn.btn-sm.btn-danger.btn-delete.mr-1 {:data-deckuid (:uid deck) :data-deckname (:name deck)} [:i.fas.fa-times.mr-1] "Delete"]]]
         ]]))
     
 (defn decklist [req]
   (h/html5
     misc/pretty-head
+    (h/include-js "/js/whk_deck_list.js")
     [:body
       (misc/navbar req)
       [:div.container.my-2
+        ;[:div {:class (str "alert alert-dismissible fade " (-> req :alert :type) (if (some? (-> req :alert :message)) " show")) :role "alert"} (-> req :alert :message)
+        ;  [:button.close {:type"button" :data-dismiss "alert" :aria-label "Close"}
+        ;    [:span {:aria-hidden "true"} "&#10799;"]]]
         [:div.row
           [:div.col-md-8
-            [:div.accordian
+            [:div#roster.accordian
               [:div.card
                 [:div.card-header "Your Army Roster"]]
               (map #(deck-card %) (db/get-user-decks (-> req misc/get-authentications :uid)))]]
           [:div.col-md-4
             [:a.btn.btn-primary.m-2 {:href "/decks/new"} "New Deck"]
-            [:button.btn.btn-warning.m-2 {:data-toggle "modal" :data-target "#loaddeck"} "Load Deck"]]]]
+            [:button.btn.btn-warning.m-2 {:data-toggle "modal" :data-target "#loaddeck"} "Import Deck"]]]]
+      [:div#deletedeck.modal {:role "dialog"}
+        [:div.modal-dialog {:role "document"}
+          [:div.modal-content 
+            [:div.modal-header  "Delete Deck"
+              [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+                [:span {:aria-hidden "true"} "&times;"]]]
+            [:div#deletealert.modal-body]
+            [:div.modal-footer
+              [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]
+              [:form {:action "/decks/delete" :method "post"}
+                [:input#deletedeckuid {:name "deletedeckuid" :hidden true}]
+                [:button.btn.btn-danger {:type "submit" } "Delete"]]]]]]
       [:div#loaddeck.modal {:role "dialog"}
         [:div.modal-dialog {:role "document"}
           [:div.modal-content
@@ -95,8 +111,24 @@
                   (->> misc/cards :data (sort-by :code) (map :faction_code) distinct))]]]
           [:div.col-sm-4.d-none.d-sm-block
             [:div#warlordcards.row.sticky-top]]]]]))
-    
+
+(defn get-deck-data [req]
+  ; id is numeric 5 digits - new deck
+  ; id is alphanumeric 6 digits - existing deck
+  (if (some? (re-matches #"/decks/new/[0-9]{6}" (-> req :uri)))
+      (assoc {} ; :uid     nil
+                :data (-> req :params :id misc/signature-squad-decklist json/write-str)
+                :tags (-> req :params :id misc/faction-code)
+                ; :notes  nil 
+                ; :name   nil
+                )
+      (let [deck (get-user-deck (-> req :params :id))]
+        (if (some? deck)
+            deck
+            {}))))
+            
 (defn deckbuilder [req]
+  (let [deck (get-deck-data req)]
     (h/html5
       misc/pretty-head
       (h/include-js "https://cdnjs.cloudflare.com/ajax/libs/showdown/1.8.6/showdown.min.js")
@@ -117,13 +149,13 @@
                 [:div.h5 "Empty Deck"]]
               [:div.row-fluid.my-1.border-dark.border-top
                 [:form#save_form.form.needs-validation {:method "post" :action "/decks/save" :role "form" :novalidate true}
-                  [:input#deck-id {:type "text" :name "deck-id" :hidden true}]
-                  [:input#deck-content {:type "text" :name "deck-content" :value (-> req :params :id misc/signature-squad-decklist json/write-str) :hidden true}]
-                  [:input#deck-tags {:type "text" :name "deck-tags" :value (-> req :params :id misc/faction-code) :hidden true}]
-                  [:input#deck-notes {:type "text" :name "deck-notes" :hidden true}]
+                  [:input#deck-id      {:type "text" :name "deck-id"      :value (:uid deck)   :hidden true}]
+                  [:input#deck-content {:type "text" :name "deck-content" :value (:data deck)  :hidden true}]
+                  [:input#deck-tags    {:type "text" :name "deck-tags"    :value (:tags deck)  :hidden true}]
+                  [:input#deck-notes   {type "text"  :name "deck-notes"   :value (:notes deck) :hidden true}]
                   [:div.form-group
                     [:label {:for "#deck-name" :required true} "Army Name"]
-                    [:input#deck-name.form-control {:type "text" :name "deck-name" :placeholder "New Deck" :required true}]
+                    [:input#deck-name.form-control {:type "text" :name "deck-name" :placeholder "New Deck" :required true :value (:name deck)}]
                     [:div.invalid-feedback "You must name your Army"]]
                   [:button.btn.btn-warning {:role "submit"} "Save"]]]]
         ;; OPTIONS
@@ -225,7 +257,7 @@
                   [:div.row 
                     [:div#setlist.ml-3]]]]]]]
         [:div.border-top.border-dark.bg-secondary.text-light.px-3.pb-5 "Information"]
-        [:div#cardmodal.modal {:role "dialog"}]]))
+        [:div#cardmodal.modal {:role "dialog"}]])))
    
 (defn collection [req]
   (h/html5

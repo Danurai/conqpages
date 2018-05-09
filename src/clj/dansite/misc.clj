@@ -4,7 +4,7 @@
     [cemerick.friend :as friend]
     [clojure.java.io :as io]
     [clojure.data.json :as json]
-    [dansite.users :as users :refer [users]]))
+    [dansite.database :as db]))
     
 
 (def cards (json/read-str (slurp (io/resource "data/wh40k_cards.min.json")) :key-fn keyword))
@@ -76,7 +76,7 @@
               [:i.fas.fa-user]]
               (if-let [identity (friend/identity req)]
                 [:div.dropdown-menu {:aria-labelledby "userDropdown"}
-                  (if (friend/authorized? #{::users/admin} (friend/identity req))
+                  (if (friend/authorized? #{::db/admin} (friend/identity req))
                     [:a.dropdown-item {:href "/admin"} "Admin Console"])
                   [:a.dropdown-item {:href "/logout"} "Logout"]]
                 [:div.dropdown-menu {:aria-labelledby "userDropdown"}

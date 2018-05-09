@@ -29,7 +29,11 @@
   (GET "/new/:id" []
     pages/deckbuilder)
   (GET "/edit/:id" []
-    pages/deckbuilder))
+    pages/deckbuilder)
+  (POST "/delete" [deletedeckuid]
+    (do 
+      (db/delete-deck deletedeckuid)
+      (redirect "/decks"))))
   
 (defroutes app-routes
   (GET "/" req

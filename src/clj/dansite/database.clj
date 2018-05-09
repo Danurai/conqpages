@@ -128,4 +128,8 @@
 (defn get-user-decks [uid]
   (j/query db ["SELECT * FROM decklists WHERE author = ? ORDER BY UPDATED DESC" uid]))
   
+(defn get-user-deck [deckuid]
+  (first (j/query db ["SELECT * FROM decklists WHERE uid = ?" deckuid])))  
   
+(defn delete-deck [deckuid]
+  (j/delete! db  :decklists ["uid = ?" deckuid]))
