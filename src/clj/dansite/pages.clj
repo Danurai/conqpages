@@ -7,6 +7,16 @@
     [dansite.misc :as misc]
     [dansite.database :as db :refer [get-user-decks get-user-deck]]
     [dansite.tools :refer [cardfilter attrfilter]]))
+    
+(def alert (atom {}))
+
+(defn- show-alert []
+  (let [type (-> @alert :type)
+       msg  (-> @alert :message)]
+    (when (some? type)
+      (reset! alert {})
+      [:div {:class (str "alert alert-dismissible fade show " type) :role "alert"} msg
+        [:button.close {:type"button" :data-dismiss "alert" :aria-label "Close"} [:span {:aria-hidden "true"} "&#10799;"]]])))
 
 (defn- icon-svg [faction_code]
   [:svg.icon-faction.align-bottom {:class faction_code :xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 200 200"}
@@ -20,18 +30,19 @@
         first)
     :qty (val code)))
     
-(defn deck-card [deck]
-  (let [cards-in-deck (map #(get-card %) (-> deck :data json/read-str))]
+(defn- deck-card [deck]
+  (let [cards-in-deck (map #(get-card %) (-> deck :data json/read-str))
+        warlord     (->> cards-in-deck (filter #(= (:type_code %) "warlord_unit")) first)]
     [:div.card 
       [:div.px-3.py-1 {:data-toggle "collapse" :data-target (str "#" (:uid deck))}
         [:div.row
           [:div.col-sm-9
             [:div.h5.mt-2 (:name deck)]
-            [:div.text-muted (->> cards-in-deck (filter #(= (:type_code %) "warlord_unit")) first :name)]
+            [:div.text-muted (:name warlord)]
             [:div
               (map (fn [x] [:a.badge.badge-secondary.text-light.mr-1 x]) (re-seq #"\w+" (:tags deck)))]]
           [:div.col-sm-3.d-none.d-sm-block
-            [:div.warlord-thumb.ml-auto {:style "background-image: url();"}]]]]
+            [:div.warlord-thumb.ml-auto.border.border-secondary.rounded {:style (str "background-image: url(" (:img warlord) ");")}]]]]
       [:div.collapse.px-3.py-1 {:data-parent "#accordian" :id (:uid deck)}
         [:div.row
           [:div.col-sm-12
@@ -39,7 +50,7 @@
         [:div.row.mb-2
           [:div.col-sm-6 
             (map (fn [r] [:div (str (:qty r) "x ")
-                               [:a {:href"#"} (:name r)]]) cards-in-deck) ]
+                          [:a {:href"#"} (:name r)]]) cards-in-deck) ]
           [:div.col-sm-6]]
         [:div.row.mb-2
           [:div.small.col-sm-12.text-muted (str "Created on " (-> deck :created c/from-long))]
@@ -51,46 +62,46 @@
         ]]))
     
 (defn decklist [req]
-  (h/html5
-    misc/pretty-head
-    (h/include-js "/js/whk_deck_list.js")
-    [:body
-      (misc/navbar req)
-      [:div.container.my-2
-        ;[:div {:class (str "alert alert-dismissible fade " (-> req :alert :type) (if (some? (-> req :alert :message)) " show")) :role "alert"} (-> req :alert :message)
-        ;  [:button.close {:type"button" :data-dismiss "alert" :aria-label "Close"}
-        ;    [:span {:aria-hidden "true"} "&#10799;"]]]
-        [:div.row
-          [:div.col-md-8
-            [:div#roster.accordian
-              [:div.card
-                [:div.card-header "Your Army Roster"]]
-              (map #(deck-card %) (db/get-user-decks (-> req misc/get-authentications :uid)))]]
-          [:div.col-md-4
-            [:a.btn.btn-primary.m-2 {:href "/decks/new"} "New Deck"]
-            [:button.btn.btn-warning.m-2 {:data-toggle "modal" :data-target "#loaddeck"} "Import Deck"]]]]
-      [:div#deletedeck.modal {:role "dialog"}
-        [:div.modal-dialog {:role "document"}
-          [:div.modal-content 
-            [:div.modal-header  "Delete Deck"
-              [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-                [:span {:aria-hidden "true"} "&times;"]]]
-            [:div#deletealert.modal-body]
-            [:div.modal-footer
-              [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]
-              [:form {:action "/decks/delete" :method "post"}
-                [:input#deletedeckuid {:name "deletedeckuid" :hidden true}]
-                [:button.btn.btn-danger {:type "submit" } "Delete"]]]]]]
-      [:div#loaddeck.modal {:role "dialog"}
-        [:div.modal-dialog {:role "document"}
-          [:div.modal-content
-            [:div.modal-header "Load Deck"
-              [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-                [:span {:aria-hidden "true"} "&times;"]]]
-            [:div.modal-body "Load form goes here"]
-            [:div.modal-footer
-              [:button.btn.btn-primary {:type "button"} "Save changes"]
-              [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]]))
+  (let [user-decks (db/get-user-decks (-> req misc/get-authentications :uid))]
+    (h/html5
+      misc/pretty-head
+      (h/include-js "/js/whk_deck_list.js")
+      [:body
+        (misc/navbar req)
+        [:div.container.my-2
+          (show-alert)
+          [:div.row
+            [:div.col-md-8
+              [:div.mb-2
+                [:span.h3.mr-2 "Your Army Roster"]
+                [:span (str "(" (count user-decks) ")")]]
+              [:div#roster.accordian
+                (map #(deck-card %) user-decks)]]
+            [:div.col-md-4
+              [:a.btn.btn-primary.m-2 {:href "/decks/new"} "New Deck"]
+              [:button.btn.btn-warning.m-2 {:data-toggle "modal" :data-target "#loaddeck"} "Import Deck"]]]]
+        [:div#deletedeck.modal {:role "dialog"}
+          [:div.modal-dialog {:role "document"}
+            [:div.modal-content 
+              [:div.modal-header  "Delete Deck"
+                [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+                  [:span {:aria-hidden "true"} "&times;"]]]
+              [:div#deletealert.modal-body]
+              [:div.modal-footer
+                [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]
+                [:form {:action "/decks/delete" :method "post"}
+                  [:input#deletedeckuid {:name "deletedeckuid" :hidden true}]
+                  [:button.btn.btn-danger {:type "submit" } "Delete"]]]]]]
+        [:div#loaddeck.modal {:role "dialog"}
+          [:div.modal-dialog {:role "document"}
+            [:div.modal-content
+              [:div.modal-header "Load Deck"
+                [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+                  [:span {:aria-hidden "true"} "&times;"]]]
+              [:div.modal-body "Load form goes here"]
+              [:div.modal-footer
+                [:button.btn.btn-primary {:type "button"} "Save changes"]
+                [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]])))
 
 (defn newdeck [req]
   (h/html5
@@ -112,16 +123,13 @@
           [:div.col-sm-4.d-none.d-sm-block
             [:div#warlordcards.row.sticky-top]]]]]))
 
-(defn get-deck-data [req]
+(defn get-deck-data
   ; id is numeric 5 digits - new deck
   ; id is alphanumeric 6 digits - existing deck
+  [req]
   (if (some? (re-matches #"/decks/new/[0-9]{6}" (-> req :uri)))
-      (assoc {} ; :uid     nil
-                :data (-> req :params :id misc/signature-squad-decklist json/write-str)
-                :tags (-> req :params :id misc/faction-code)
-                ; :notes  nil 
-                ; :name   nil
-                )
+      {:data (-> req :params :id misc/signature-squad-decklist json/write-str)
+       :tags (-> req :params :id misc/faction-code)}
       (let [deck (get-user-deck (-> req :params :id))]
         (if (some? deck)
             deck
@@ -157,7 +165,8 @@
                     [:label {:for "#deck-name" :required true} "Army Name"]
                     [:input#deck-name.form-control {:type "text" :name "deck-name" :placeholder "New Deck" :required true :value (:name deck)}]
                     [:div.invalid-feedback "You must name your Army"]]
-                  [:button.btn.btn-warning {:role "submit"} "Save"]]]]
+                  [:button.btn.btn-warning.mr-2 {:role "submit"} "Save"]
+                  [:a.btn.btn-light.mr-2 {:href "/decks"} "Cancel Edits"]]]]
         ;; OPTIONS
             [:div.col-md-6
               [:ul.nav.nav-tabs.nav-fill  
@@ -351,7 +360,7 @@
                  ])
                 (attrfilter misc/cards q))]]]]]))
 
-(defn card [code]
+(defn cardpage [code]
   (h/html5 
     misc/pretty-head
     [:body
@@ -370,3 +379,38 @@
               [:img {:src (:img r) :alt (:name r)}]]])
           (->> misc/cards :data (filter #(= (:code %) code)) first))
       ]]))
+
+(defn litmus [req]
+  (h/html5
+    misc/pretty-head
+    [:body 
+      (misc/navbar req)
+      [:div#litmus.container]]))
+      
+(defn login [req]
+  (h/html5
+    misc/pretty-head
+    [:body  
+      (misc/navbar req)
+      [:div.container
+        [:div.row.my-2
+          [:div.col-sm-6.mx-auto
+            [:div.card.mt-2
+              [:div.card-header "Login"]
+              [:div.card-body
+                [:form {:action "login" :method "post"}
+                  [:div.form-group
+                    [:label {:for "username"} "Name"]
+                    [:input#username.form-control {:type "text" :name "username" :placeholder "Username or email address" :auto-focus true}]]
+                  [:div.form-group
+                    [:label {:for "password"} "Password"]
+                    [:input#userpassword.form-control {:type "password" :name "password" :placeholder "Password"}]]
+                  [:button.btn.btn-warning.mr-2 {:type "submit"} "Login"]
+                  [:a.btn-btn-link.float-right {:href "/register"} "Register"]]]]]]]]))
+                  
+(defn register [req]
+  (h/html5
+    misc/pretty-head
+    [:body 
+      (misc/navbar req)
+      [:div.container]]))

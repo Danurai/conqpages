@@ -4,8 +4,7 @@
     [cemerick.friend :as friend]
     [clojure.java.io :as io]
     [clojure.data.json :as json]
-    [dansite.database :as db]))
-    
+    [dansite.database :as db]))    
 
 (def cards (json/read-str (slurp (io/resource "data/wh40k_cards.min.json")) :key-fn keyword))
 (def packs (json/read-str (slurp (io/resource "data/wh40k_packs.min.json")) :key-fn keyword))
@@ -62,7 +61,7 @@
           (navlink req "Collection")
     ;;(navlink req "Search")
           [:li.nav-item 
-            [:a.nav-link.disabled "Litmus"]]] ;; {:href "/litmus"}
+            [:a.nav-link {:href "/litmus"} "Litmus"]]]
     ;; Inline Search Form
           [:form.form-inline.mx-2.my-lg-0 {:action "/find" :method "get"}
             [:div.input-group

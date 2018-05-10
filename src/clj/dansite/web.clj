@@ -17,8 +17,8 @@
              [dansite.database :as db]))
 
 (defn- save-deck-handler [id name decklist tags notes req]
-  (println (str "Saved deck id " 
-    (first (db/save-deck id name decklist tags notes (-> req misc/get-authentications :uid)))))
+  (db/save-deck id name decklist tags notes (-> req misc/get-authentications :uid))
+  (reset! pages/alert {:type "alert-info" :message "Deck saved"})
   (redirect "/decks"))
  
 (defroutes deck-routes
@@ -30,9 +30,14 @@
     pages/deckbuilder)
   (GET "/edit/:id" []
     pages/deckbuilder)
+  (POST "/save" [deck-id deck-name deck-content deck-tags deck-notes]  
+    (friend/wrap-authorize 
+      #(save-deck-handler deck-id deck-name deck-content deck-tags deck-notes %) 
+      #{::db/user}))
   (POST "/delete" [deletedeckuid]
     (do 
       (db/delete-deck deletedeckuid)
+      (reset! pages/alert {:type "alert-warning" :message "Deck deleted"})
       (redirect "/decks"))))
   
 (defroutes app-routes
@@ -46,22 +51,32 @@
             [:li [:span.h5 "Decks: "] "Create or Edit Deck Lists"]
             [:li [:span.h5 "Cards: "] "View or search cards"]
             [:li [:span.h5 "Collection: "] "Browse collection in virtual folders"]
+            [:li [:span.h5 "Litmus: "] "Test decks"]
             ]]]))
-  (GET "/collection" []
-    pages/collection)
+  (context "/decks" []
+    ;deck-routes)
+    (friend/wrap-authorize deck-routes #{::db/user}))
   (GET "/cards" []
     pages/searchpage)  
+  (GET "/collection" []
+    pages/collection)
+  (GET "/litmus" []
+    (friend/wrap-authorize pages/litmus #{::db/user}))
+  ; Login
+  (GET "/login" []
+    pages/login)
+  (GET "/register" []
+    pages/register)
+  (friend/logout
+    (ANY "/logout" [] (redirect "/")))
+  ; TODO wrap search?
   (GET "/find" [q]
     (pages/findcards q))
   (GET "/pack/:id" [id]
     (pages/searchattr (str "e:" id))) ;;TODO USE STANDARD pages/search response
   (GET "/card/:code{[0-9]+}" [code]
-    (pages/card code))
-    
-  (context "/decks" []
-    ;deck-routes)
-    (friend/wrap-authorize deck-routes #{::db/user}))
-    
+    (pages/cardpage code))
+  ; API
   (context "/api/data" []
     (GET "/cards" [] (content-type (response (slurp (io/resource "data/wh40k_cards.min.json"))) "application/json"))
     (GET "/packs" [] (content-type (response (slurp (io/resource "data/wh40k_packs.min.json"))) "application/json"))
@@ -69,31 +84,7 @@
     (GET "/factions" [] (content-type (response (slurp (io/resource "data/wh40k_factions.min.json"))) "application/json"))
     (GET "/types" [] (content-type (response (slurp (io/resource "data/wh40k_types.min.json"))) "application/json")))
   
-  (GET "/login" req
-    (h/html5
-      misc/pretty-head
-      [:body  
-        (misc/navbar req)
-        [:div.container
-          [:div.row.my-2
-            [:div.col-sm-6.offset-3
-              [:div.card.mt-2
-                [:div.card-header "Login"]
-                [:div.card-body
-                  [:form {:action "login" :method "post"}
-                    [:div.form-group
-                      [:label {:for "username"} "Name"]
-                      [:input#username.form-control {:type "text" :name "username" :placeholder "Username or email address" :auto-focus true}]]
-                    [:div.form-group
-                      [:label {:for "password"} "Password"]
-                      [:input#userpassword.form-control {:type "password" :name "password" :placeholder "Password"}]]
-                    [:button.btn.btn-warning.float-right {:type "submit"} "Login"]]]]]]]]))
-                    
-  (friend/logout
-    (ANY "/logout" [] (redirect "/")))
   ; TODO wrap-authorize?
-  (POST "/decks/save" [deck-id deck-name deck-content deck-tags deck-notes]  
-    (friend/wrap-authorize #(save-deck-handler deck-id deck-name deck-content deck-tags deck-notes %) #{::db/user}))
   (resources "/"))
    
 (def app 
