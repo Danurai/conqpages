@@ -23,6 +23,28 @@
 ;         :user "conq_user"
 ;         :password "user"})
       
+(defn updateuseradmin [uid admin]
+  (j/update! db :users {:admin admin}
+           ["uid = ?" uid]))
+  
+(defn updateuserpassword [uid password]
+  (j/update! db :users {:password (creds/hash-bcrypt password)}
+           ["uid = ?" uid]))
+           
+(defn adduser [username password admin]
+  (j/insert! db :users 
+    {:username username
+     :password (creds/hash-bcrypt password)
+     :admin admin
+     :created (if (= (:subprotocol db) "sqlite")
+                (t/now)
+                (c/to-long (t/now)))}))
+
+(defn dropuser [uid]
+  (j/delete! db :decklists ["author = ?" uid])
+  (j/delete! db :users ["uid = ?" uid]))
+                
+                
 (defn create-db []
   (if (= (:subprotocol db) "sqlite") ; Split for AUTOINCREMENT / NEXTVAL
   ; Create User table in SQLITE
@@ -79,6 +101,7 @@
 
 ; USERS
     
+           
 (defn users []
   (->> (j/query db ["select * from users"])
        (map (fn [x] (hash-map (:username x) (-> x (dissoc :admin)(assoc :roles (if (or (= 1 (:admin x)) (true? (:admin x))) #{::admin} #{::user}))))))
@@ -123,7 +146,9 @@
         (if (zero? (first result))
           (j/insert! t-con :decklists (assoc qry :created (c/to-long (t/now)) :updated (c/to-long (t/now))))
           result)))))
-    
+
+(defn get-users []
+  (j/query db ["SELECT uid, username, admin FROM users"]))
     
 (defn get-user-decks [uid]
   (j/query db ["SELECT * FROM decklists WHERE author = ? ORDER BY UPDATED DESC" uid]))
@@ -133,3 +158,4 @@
   
 (defn delete-deck [deckuid]
   (j/delete! db  :decklists ["uid = ?" deckuid]))
+  

@@ -3,7 +3,7 @@
              [clojure.data.json :as json]
              [compojure.core :refer [defroutes GET POST ANY context]]
              [compojure.route :refer [not-found resources]]
-             [ring.util.response :refer [response resource-response content-type redirect]]
+             [ring.util.response :refer [response resource-response content-type redirect status]]
              [ring.middleware.params :refer [wrap-params]]
              [ring.middleware.keyword-params :refer [wrap-keyword-params]]
              [ring.middleware.nested-params :refer [wrap-nested-params]]
@@ -18,7 +18,7 @@
 
 (defn- save-deck-handler [id name decklist tags notes req]
   (db/save-deck id name decklist tags notes (-> req misc/get-authentications :uid))
-  (reset! pages/alert {:type "alert-info" :message "Deck saved"})
+  (reset! misc/alert {:type "alert-info" :message "Deck saved"})
   (redirect "/decks"))
  
 (defroutes deck-routes
@@ -37,25 +37,37 @@
   (POST "/delete" [deletedeckuid]
     (do 
       (db/delete-deck deletedeckuid)
-      (reset! pages/alert {:type "alert-warning" :message "Deck deleted"})
+      (reset! misc/alert {:type "alert-warning" :message "Deck deleted"})
       (redirect "/decks"))))
-  
+
+(defroutes admin-routes
+  (GET "/" []
+    pages/useradmin)
+  (POST "/updatepassword" [uid password]
+    (db/updateuserpassword uid password)
+    (reset! misc/alert {:type "alert-info" :message "Password updated"})
+    (redirect "/admin"))
+  (POST "/updateadmin" [uid admin]
+    (db/updateuseradmin uid (some? admin))
+    (reset! misc/alert {:type "alert-info" :message (str "Admin status " (if (some? admin) "added" "removed"))})
+    (redirect "/admin"))
+  (POST "/adduser" [username password admin]
+    (db/adduser username password (= admin "on"))
+    (reset! misc/alert {:type "alert-info" :message (str "User Account created for " username)})
+    (redirect "/admin"))
+  (POST "/deleteuser" [uid]
+    (reset! misc/alert {:type "alert-warning" :message "User Account Deleted"})
+    (db/dropuser uid)))
+    
+    
 (defroutes app-routes
-  (GET "/" req
-    (h/html5 
-      misc/pretty-head
-      [:body
-        (misc/navbar req)
-        [:div.container.my-2
-          [:ul
-            [:li [:span.h5 "Decks: "] "Create or Edit Deck Lists"]
-            [:li [:span.h5 "Cards: "] "View or search cards"]
-            [:li [:span.h5 "Collection: "] "Browse collection in virtual folders"]
-            [:li [:span.h5 "Litmus: "] "Test decks"]
-            ]]]))
+  (GET "/" []
+    pages/home)
   (context "/decks" []
-    ;deck-routes)
     (friend/wrap-authorize deck-routes #{::db/user}))
+  (context "/admin" []
+    (friend/wrap-authorize admin-routes #{::db/admin}))
+    ;admin-routes)
   (GET "/cards" []
     pages/searchpage)  
   (GET "/collection" []
@@ -72,8 +84,12 @@
   ; TODO wrap search?
   (GET "/find" [q]
     (pages/findcards q))
+  (GET "/cycle/:id" [id]
+    ;(pages/findcards (str "y:" id)))
+    (let [cycle_code (->> misc/cycles :data (filter #(= (:position %) (read-string id))) first :code)]
+      (pages/findcards (str "e:" (->> misc/packs :data (filter #(= (:cycle_code %) cycle_code)) (map :code) (clojure.string/join "|"))))))
   (GET "/pack/:id" [id]
-    (pages/searchattr (str "e:" id))) ;;TODO USE STANDARD pages/search response
+    (pages/findcards (str "e:" id)))
   (GET "/card/:code{[0-9]+}" [code]
     (pages/cardpage code))
   ; API
@@ -83,8 +99,6 @@
     (GET "/cycles" [] (content-type (response (slurp (io/resource "data/wh40k_cycles.min.json"))) "application/json"))
     (GET "/factions" [] (content-type (response (slurp (io/resource "data/wh40k_factions.min.json"))) "application/json"))
     (GET "/types" [] (content-type (response (slurp (io/resource "data/wh40k_types.min.json"))) "application/json")))
-  
-  ; TODO wrap-authorize?
   (resources "/"))
    
 (def app 
@@ -93,6 +107,14 @@
       {:allow-anon? true
        :login-uri "/login"
        :default-landing-uri "/"
+       :unauthorized-handler
+          #(-> (h/html5 
+                misc/pretty-head 
+                [:body 
+                  (misc/navbar %) 
+                  [:div.container 
+                    [:div.mt-2.h2 "Access Denied: " (:uri %)]]])
+            response (status 401))
        :credential-fn #(creds/bcrypt-credential-fn (db/users) %)
        :workflows [(workflows/interactive-form)]})
     (wrap-keyword-params)

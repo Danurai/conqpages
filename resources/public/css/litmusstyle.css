@@ -1,0 +1,104 @@
+body  {
+  font-family: 'Exo 2', sans-serif;
+}
+
+a:link  {
+  color: teal;
+}
+a:visited   {
+  color: teal;
+}
+a:hover {
+  color: lightseagreen;
+}
+a:active  {
+  color: lightseagreen;
+}
+
+#log {
+  border: 1px solid grey;
+  height: 300px;
+  width: 100%;
+  border-radius: 10px;
+  display: inline-flex;
+  flex-direction: column-reverse;
+  overflow: auto;
+}
+.logitem  {
+  margin: 0px 5px;
+}
+
+#popupmenu  {
+  position: absolute;
+  opacity: 0.9;
+  background-color: white;
+  border: 1px solid darkgrey;
+  width: 120px;
+  padding: 5px;
+}
+.popupmenu-header {
+  margin: 5px 0px 0px 5px;
+  font-weight: bold;
+}
+.cardcount {
+  width: 1.8em;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  background-color: darkslategrey;
+  opacity: 0.7;
+  color: white;
+  border-radius: 5px;
+  text-align: center;
+}
+.resources {
+  border-radius: 5px;
+  color: white;
+  background-color: darkslategrey;
+}
+.btn-res  {
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.cardimg  {
+  height: 480px;
+}
+.card-wrap  {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  margin: 2px;
+  border-radius: 5px;
+  border: 1px solid white;
+}
+.card {
+  width: 80px;
+  min-height: 100px;
+  transition: transform 1s; 
+}
+.card-tapped  {
+  transform: rotate(90deg);
+  transition: transform 1s; 
+}
+.card-planet  {
+  height: 110px;
+  min-width: 150px;
+  border-radius: 2px;
+  border: 1px solid gray;
+  min-height: 50px;
+}
+.can-play {
+   border: 2px solid limegreen;
+}
+.no-play {
+  border: 2px solid grey;
+  opacity: 0.6;
+}
+
+
+.command {
+  float: right;
+}
+.command-icon {
+  display: block;
+}

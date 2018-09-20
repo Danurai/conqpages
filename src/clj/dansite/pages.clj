@@ -6,17 +6,58 @@
     [clj-time.coerce :as c]
     [dansite.misc :as misc]
     [dansite.database :as db :refer [get-user-decks get-user-deck]]
-    [dansite.tools :refer [cardfilter attrfilter]]))
+    [dansite.tools :as tools :refer [cardfilter]]))
     
-(def alert (atom {}))
+(load "pages/admin")
+(load "pages/search")
 
-(defn- show-alert []
-  (let [type (-> @alert :type)
-       msg  (-> @alert :message)]
-    (when (some? type)
-      (reset! alert {})
-      [:div {:class (str "alert alert-dismissible fade show " type) :role "alert"} msg
-        [:button.close {:type"button" :data-dismiss "alert" :aria-label "Close"} [:span {:aria-hidden "true"} "&#10799;"]]])))
+(defn get-card-from-code [code] (->> misc/cards :data (filter #(= (:code %) code)) first))
+
+(defn cardpage [code]
+  (h/html5 
+    misc/pretty-head
+    [:body
+      (misc/navbar nil)
+      [:div.container.my-2
+        ((fn [r]
+          (let [code-card (Integer/parseInt (:code r))
+               card-next (get-card-from-code (format "%06d" (inc code-card)))
+               card-prev (get-card-from-code (format "%06d" (dec code-card)))]
+            [:div.col
+              [:div.row-fluid.d-flex.justify-content-between.my-3
+                [:span
+                  [:a.btn.btn-outline-secondary {:href (str "/card/" (:code card-prev)) :hidden (nil? card-prev)} (:name card-prev)]]
+                [:span 
+                  [:a.btn.btn-outline-secondary {:href (str "/pack/" (:pack_code r))} (:pack r)]]
+                [:span 
+                  [:a.btn.btn-outline-secondary {:href (str "/card/" (:code card-next)) :hidden (nil? card-next)} (:name card-next)]]]
+              [:div.row
+                [:div.col-sm
+                  [:div.card  
+                    [:div.card-header [:h2 (if (:unique r) [:img.unique-icon.mr-1 {:src "/img/skull.png"}]) (:name r)]]
+                    [:div.card-body (:text r)]
+                    [:div.card-footer.text-muted.d-flex.justify-content-between
+                      [:span (:faction r)]
+                      [:span (str (:pack r) " #" (-> r :position Integer.))]]]]
+                [:div.col-sm
+                  [:img {:src (:img r) :alt (:name r)}]]]]))
+        (get-card-from-code code))]]))
+
+(defn searchpage [req]
+  (h/html5
+    misc/pretty-head
+    [:body  
+      (misc/navbar req)
+      [:div.container.my-2
+        [:div.col-md-6
+          [:div.row-fluid
+            (for [cycle (:data misc/cycles)]
+              [:div
+                [:a {:href (str "/cycle/" (:position cycle))} (:name cycle)]
+                [:ol
+                  (for [pack (->> misc/packs :data (remove #(= (:code %) (:code cycle))) (filter #(= (:cycle_code %) (:code cycle))))]
+                    [:li [:a {:href (str "pack/" (:code pack))} (:name pack)]])]])
+          ]]]]))
 
 (defn- icon-svg [faction_code]
   [:svg.icon-faction.align-bottom {:class faction_code :xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 200 200"}
@@ -29,7 +70,7 @@
         (filter #(= (:code %) (key code)))
         first)
     :qty (val code)))
-    
+        
 (defn- deck-card [deck]
   (let [cards-in-deck (map #(get-card %) (-> deck :data json/read-str))
         warlord     (->> cards-in-deck (filter #(= (:type_code %) "warlord_unit")) first)]
@@ -60,7 +101,20 @@
             [:a.btn.btn-sm.btn-primary.mr-1 {:href (str "/decks/edit/" (:uid deck))} [:i.fas.fa-edit.mr-1] "Edit"]
             [:button.btn.btn-sm.btn-danger.btn-delete.mr-1 {:data-deckuid (:uid deck) :data-deckname (:name deck)} [:i.fas.fa-times.mr-1] "Delete"]]]
         ]]))
-    
+
+(defn home [req]
+  (h/html5 
+    misc/pretty-head
+    [:body
+      (misc/navbar req)
+      [:div.container.my-2
+        [:ul
+          [:li [:span.h5 "Decks: "] "Create or Edit Deck Lists"]
+          [:li [:span.h5 "Cards: "] "View or search cards"]
+          [:li [:span.h5 "Collection: "] "Browse collection in virtual folders"]
+          [:li [:span.h5 "Litmus: "] "Test decks"]
+          ]]]))
+        
 (defn decklist [req]
   (let [user-decks (db/get-user-decks (-> req misc/get-authentications :uid))]
     (h/html5
@@ -69,7 +123,7 @@
       [:body
         (misc/navbar req)
         [:div.container.my-2
-          (show-alert)
+          (misc/show-alert)
           [:div.row
             [:div.col-md-8
               [:div.mb-2
@@ -157,10 +211,10 @@
                 [:div.h5 "Empty Deck"]]
               [:div.row-fluid.my-1.border-dark.border-top
                 [:form#save_form.form.needs-validation {:method "post" :action "/decks/save" :role "form" :novalidate true}
-                  [:input#deck-id      {:type "text" :name "deck-id"      :value (:uid deck)   :hidden true}]
-                  [:input#deck-content {:type "text" :name "deck-content" :value (:data deck)  :hidden true}]
-                  [:input#deck-tags    {:type "text" :name "deck-tags"    :value (:tags deck)  :hidden true}]
-                  [:input#deck-notes   {type "text"  :name "deck-notes"   :value (:notes deck) :hidden true}]
+                  [:input#deck-id      {:type "text" :name "deck-id"      :value (:uid deck) :readonly true :hidden true}]
+                  [:input#deck-content {:type "text" :name "deck-content" :value (:data deck)  :readonly true :hidden true}]
+                  [:input#deck-tags    {:type "text" :name "deck-tags"    :value (:tags deck) :readonly true :hidden true}]
+                  [:input#deck-notes   {type "text"  :name "deck-notes"   :value (:notes deck) :readonly true :hidden true}]
                   [:div.form-group
                     [:label {:for "#deck-name" :required true} "Army Name"]
                     [:input#deck-name.form-control {:type "text" :name "deck-name" :placeholder "New Deck" :required true :value (:name deck)}]
@@ -288,129 +342,15 @@
                 [:label.form-check-label "Show Card Images"]]]
             [:div#foldersections.row.justify-content-between]
             [:div#folderpager.row.justify-content-between]
-            [:div#folderpages.row.justify-content-between]]]]]))
-
-(defn searchpage [req]
-  (h/html5
-    misc/pretty-head
-    [:body  
-      (misc/navbar req)
-      [:div.container.my-2
-        [:div.col-md-6
-          [:div.row
-            [:ol
-              (map 
-                (fn [pack]
-                  [:li [:a {:href (str "/pack/" (:code pack))} (:name pack) ]]
-                  )
-                (:data misc/packs))]
-          ]]]]))
-            
-(defn findcards [q]
-  (h/html5
-    misc/pretty-head
-    [:body
-      (misc/navbar nil)
-      [:div.container.my-2
-        [:div.row
-          [:form.form-inline.my-2 {:action "/find" :method "get"}
-            [:div.input-group
-              [:input.form-control {:type "text" :name "q" :value q :placeholder "Search"}]
-              [:div.input-group-append
-                [:button.btn.btn-primary {:type "submit"} "Search"]]]]]
-        [:div.row
-          [:table.table.table-sm.table-hover
-            [:thead [:tr [:td "Name"][:td "Faction"][:td "Type"][:td "Cost"][:td [:i.fas.fa-cog]][:td "Set"]]]
-            [:tbody
-              (map (fn [r]
-                [:tr
-                  [:td [:a.card-tooltip {:href (str "/card/" (:code r)) :data-code (:code r)} (:name r)]]
-                  [:td (:faction r)]
-                  [:td (:type r)]
-                  [:td (:cost r)]
-                  [:td {:title (:signature_loyal r)} (case (:signature_loyal r) "Signature" [:i.fas.fa-cog.icon-sig] "Loyal" [:i.fas-fa-crosshairs.icon-loyal] "")]
-                  [:td (str (:pack r) " #" (-> r :position Integer.))]
-                 ])
-                (cardfilter misc/cards q))]]]]]))
-                
-(defn searchattr [q]
-  (h/html5
-    misc/pretty-head
-    [:body
-      (misc/navbar nil)
-      [:div.container.my-2
-        [:div.row
-          [:form.form-inline.my-2 {:action "/find" :method "get"}
-            [:div.input-group
-              [:input.form-control {:type "text" :name "q" :value q :placeholder "Search"}]
-              [:div.input-group-append
-                [:button.btn.btn-primary {:type "submit"} "Search"]]]]]
-        [:div.row
-          [:table.table.table-hover.table-sm
-            [:thead [:tr [:td "Name"][:td "Faction"][:td "Type"][:td "Cost"][:td [:i.fas.fa-cog]][:td "Set"]]]
-            [:tbody
-              (map (fn [r]
-                [:tr
-                  [:td [:a.card-tooltip {:href (str "/card/" (:code r)) :data-code (:code r)} (:name r)]]
-                  [:td (:faction r)]
-                  [:td (:type r)]
-                  [:td (:cost r)]
-                  [:td {:title (:signature_loyal r)} (case (:signature_loyal r) "Signature" [:i.fas.fa-cog.icon-sig] "Loyal" [:i.fas-fa-crosshairs.icon-loyal] "")]
-                  [:td (str (:pack r) " #" (-> r :position Integer.))]
-                 ])
-                (attrfilter misc/cards q))]]]]]))
-
-(defn cardpage [code]
-  (h/html5 
-    misc/pretty-head
-    [:body
-      (misc/navbar nil)
-      [:div.container.my-2
-        ((fn [r]
-          [:div.row
-            [:div.col-sm
-              [:div.card  
-                [:div.card-header [:h2 (:name r)]]
-                [:div.card-body (:text r)]
-                [:div.card-footer.text-muted.d-flex.justify-content-between
-                  [:span (:faction r)]
-                  [:span (str (:pack r) " #" (-> r :position Integer.))]]]]
-            [:div.col-sm
-              [:img {:src (:img r) :alt (:name r)}]]])
-          (->> misc/cards :data (filter #(= (:code %) code)) first))
-      ]]))
+            [:div#folderpages.row.justify-content-between
+              [:span.chaos-loader]]]]]]))
 
 (defn litmus [req]
-  (h/html5
-    misc/pretty-head
-    [:body 
-      (misc/navbar req)
-      [:div#litmus.container]]))
-      
-(defn login [req]
-  (h/html5
-    misc/pretty-head
-    [:body  
-      (misc/navbar req)
-      [:div.container
-        [:div.row.my-2
-          [:div.col-sm-6.mx-auto
-            [:div.card.mt-2
-              [:div.card-header "Login"]
-              [:div.card-body
-                [:form {:action "login" :method "post"}
-                  [:div.form-group
-                    [:label {:for "username"} "Name"]
-                    [:input#username.form-control {:type "text" :name "username" :placeholder "Username or email address" :auto-focus true}]]
-                  [:div.form-group
-                    [:label {:for "password"} "Password"]
-                    [:input#userpassword.form-control {:type "password" :name "password" :placeholder "Password"}]]
-                  [:button.btn.btn-warning.mr-2 {:type "submit"} "Login"]
-                  [:a.btn-btn-link.float-right {:href "/register"} "Register"]]]]]]]]))
-                  
-(defn register [req]
-  (h/html5
-    misc/pretty-head
-    [:body 
-      (misc/navbar req)
-      [:div.container]]))
+  (h/html5 
+    [:head
+      misc/pretty-head
+      (h/include-css "css/litmusstyle.css")
+      [:body
+        (misc/navbar req)
+          [:div#app]
+          (h/include-js "js/compiled/cljsapp.js")]]))

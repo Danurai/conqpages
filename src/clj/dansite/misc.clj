@@ -10,6 +10,17 @@
 (def packs (json/read-str (slurp (io/resource "data/wh40k_packs.min.json")) :key-fn keyword))
 (def cycles (json/read-str (slurp (io/resource "data/wh40k_cycles.min.json")) :key-fn keyword))
 
+
+(def alert (atom {}))
+
+(defn show-alert []
+  (let [type (-> @alert :type)
+       msg  (-> @alert :message)]
+    (when (some? type)
+      (reset! alert {})
+      [:div {:class (str "alert alert-dismissible fade show " type) :role "alert"} msg
+        [:button.close {:type"button" :data-dismiss "alert" :aria-label "Close"} [:span {:aria-hidden "true"} "&#10799;"]]])))
+        
 (def pretty-head
   [:head
   ;; Meta Tags
@@ -22,7 +33,7 @@
     [:link   {:rel "stylesheet" :href "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" :integrity "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" :crossorigin "anonymous"}]
     [:script {:src "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" :integrity "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" :crossorigin "anonymous"}]
   ;; Font Awesome
-    [:script {:defer true :src "https://use.fontawesome.com/releases/v5.0.10/js/all.js"}]
+    [:script {:defer true :src "https://use.fontawesome.com/releases/v5.0.13/js/all.js"}]
   ;; JQuery Qtip2
     [:link   {:rel "stylesheet" :href "https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.css"}]
     [:script {:src "https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.js"}]
@@ -33,7 +44,7 @@
     (h/include-css "/css/style.css")
     (h/include-css "https://fonts.googleapis.com/css?family=Exo+2")   ;; <link href="https://fonts.googleapis.com/css?family=Aldrich|Electrolize|Exo|Exo+2|Jura|Mina|Play|Rationale|Sarpanch" rel="stylesheet">
     ])
-
+        
 (defn- navlink
 "Returns hiccup code for a navbar link"
   [req title]
@@ -59,9 +70,7 @@
           (navlink req "Decks")
           (navlink req "Cards")
           (navlink req "Collection")
-    ;;(navlink req "Search")
-          [:li.nav-item 
-            [:a.nav-link {:href "/litmus"} "Litmus"]]]
+          (navlink req "Litmus")]
     ;; Inline Search Form
           [:form.form-inline.mx-2.my-lg-0 {:action "/find" :method "get"}
             [:div.input-group
