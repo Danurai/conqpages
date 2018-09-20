@@ -91,7 +91,7 @@ $(document).ready(function () {
     }
 	});
 	
-	$('#filterlist').on('mousemove', function () {
+	$('.qtip-search').on('mousemove', function () {
 		$(this).qtip({
 			overwrite: false,
 			show: {
@@ -99,21 +99,24 @@ $(document).ready(function () {
 			},
 			content: {
 				text:  'Search tags:'
-					+ '<br>Type a card name'
-					+ '<br>x:&nbsp;&nbsp;card text'
-					+ '<br>e:&nbsp;&nbsp;pack code'
-					+ '<br>f:&nbsp;&nbsp;faction code'
-					+ '<br>r:&nbsp;&nbsp;resource cost'
-					+ '<br>c:&nbsp;&nbsp;command icons'
-					+ '<br>a:&nbsp;&nbsp;attack'
-					+ '<br>h:&nbsp;&nbsp;hit points'
+          + '<br>Card Name'
+					+ '<br>a:&nbsp;&nbsp; Attack Value'
+          + '<br>c:&nbsp;&nbsp; Command Icons'
+          + '<br>e:&nbsp;&nbsp; Pack Code'
+          + '<br>f:&nbsp;&nbsp; Faction Code'
+          + '<br>h:&nbsp;&nbsp; HP'
+          + '<br>r:&nbsp;&nbsp; Cost\Resources'
+          + '<br>s:&nbsp;&nbsp; Shields'
+          + '<br>t:&nbsp;&nbsp; Type Code'
+          + '<br>x:&nbsp;&nbsp; Card Text'
+          + '<br>y:&nbsp;&nbsp; Cycle ID'
 			},
 			style: {
-				classes: 'qtip-bootstrap',
+				classes: 'qtip-dark qtip-rounded whk-tooltip',
 				tip: false
 			},
 			position: {
-				my: 'right top',
+				my: 'left top',
 				at: 'right top'
 			},
 			hide:	{

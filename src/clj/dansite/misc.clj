@@ -43,6 +43,7 @@
   ;; Site Specific CSS
     (h/include-css "/css/style.css")
     (h/include-css "https://fonts.googleapis.com/css?family=Exo+2")   ;; <link href="https://fonts.googleapis.com/css?family=Aldrich|Electrolize|Exo|Exo+2|Jura|Mina|Play|Rationale|Sarpanch" rel="stylesheet">
+    (h/include-js "/js/whk_qtip.js")
     ])
         
 (defn- navlink
@@ -74,10 +75,10 @@
     ;; Inline Search Form
           [:form.form-inline.mx-2.my-lg-0 {:action "/find" :method "get"}
             [:div.input-group
-              [:input.form-control {:type "search" :placeholder "search" :name "q" :aria-label "Search"}]
+              [:input.form-control {:type "search" :placeholder "Card Search" :name "q" :aria-label "Search"}]
               [:div.input-group-append
-                [:button.btn.bg-light {:type "submit"}
-                  [:i.fas.fa-search]]]]]
+                [:div.input-group-text.bg-dark.qtip-search
+                  [:i.fas.fa-info-circle.text-white]]]]]
     ;; Login Icon
           [:span.nav-item.dropdown
             [:a#userDropdown.nav-link.dropdown-toggle.text-white {:href="#" :role "button" :data-toggle "dropdown" :aria-haspopup "true" :aria-expanded "false"}
