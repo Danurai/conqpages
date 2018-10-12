@@ -178,13 +178,14 @@
   (let [deck (get-deck-data req)]
     (h/html5
       misc/pretty-head
-      (h/include-js "https://cdnjs.cloudflare.com/ajax/libs/showdown/1.8.6/showdown.min.js")
+      (h/include-js "https://cdnjs.cloudflare.com/ajax/libs/showdown/1.8.6/showdown.min.js")  ; Markdown Converter
       (h/include-css "/css/deckstyle.css")
       (h/include-js "/js/whk_tools.js")
       (h/include-js "/js/whk_qtip.js")
       (h/include-js "/js/whk_deckbuilder.js")
-      (h/include-js "/js/externs/moment.min.js")
-      (h/include-js "/js/externs/Chart.min.js")
+      (h/include-js "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js")
+      (h/include-js "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js")
+      (h/include-js "/js/externs/chartjs-plugin-labels.min.js")
       [:body
         (misc/navbar req)
         [:div.container
@@ -296,10 +297,19 @@
                         [:i.fas.fa-chart-bar]
                         [:a {:href "#charts" :data-toggle "collapse"} "Charts"]]
                       [:div#charts.collapse
+                        [:div.row
+                          [:div.col-sm-6
+                            [:canvas#pieFact {:width "400" :height "400"}]]
+                          [:div.col-sm-6
+                            [:canvas#pieType {:width "400" :height "400"}]]]
+                        [:div.row
+                          [:div.col-sm-6
+                            [:canvas#pieCommand {:width "400" :height "400"}]]
+                          [:div.col-sm-6
+                            [:canvas#pieShield {:width "400" :height "400"}]]]
                         [:canvas#lineCost {:width "400" :height "400"}]
                         [:canvas#barIcons {:width "400" :height "400"}]
-                        [:canvas#lineStr {:width "400" :height "400"}]
-                        [:canvas#pieFact {:width "400" :height "400"}]]]]]
+                        [:canvas#lineStr {:width "400" :height "400"}]]]]]
             ;; SETS
                 [:div#decksets.tab-pane {:role "tabpanel"}
                   [:div.row 
