@@ -4,7 +4,7 @@
     [cemerick.friend :as friend]
     [clojure.java.io :as io]
     [clojure.data.json :as json]
-    [dansite.database :as db]))    
+    [dansite.database :as db]))  
 
 (def cards (json/read-str (slurp (io/resource "data/wh40k_cards.min.json")) :key-fn keyword))
 (def packs (json/read-str (slurp (io/resource "data/wh40k_packs.min.json")) :key-fn keyword))

@@ -557,11 +557,210 @@ $(document).ready(function () {
   }
   
 // Code to compile data and call Charts scripts
+
+// Pie - faction distribution
+// Pie - Shield Icons
+
+// Line - Cost
+
   function updateCharts()  {
+    pieFaction();
+    pieType();
+    pieShields();
+    pieCommand();
     //barIcons();
-    lineCost();
+    //lineCost();
     //lineStrength();
   }
+  
+  var chartColours = {
+    "Space Marines": "#DAA520",
+    "Astra Militarum": "#2F4F4F",
+    "Orks": "#006400",
+    "Chaos": "#FF8C00",
+    "Dark Eldar": "#800080",
+    "Eldar": "#FFD700",
+    "Tau": "#87CEFA",
+    "Tyrranids": "#A52A2A",
+    "Necrons": "#008080",
+    "Neutral": "#A9A9A9",
+    "Army Unit": "#AA0000",
+    "Attachment": "#00AA00",
+    "Support": "#0000AA",
+    "Event": "#DDDD00"
+  }
+  
+  function pieFaction() {
+    var labels = [];
+    var series = [];
+    var colors = [];
+    $.each(decklist().distinct("faction"), function (id, title) {
+      labels.push(title);
+      series.push(decklist({"faction" : title, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
+      colors.push(chartColours[title]);
+    });
+    new Chart (
+      $('#pieFact').get(0).getContext("2d"),
+      {
+        type: 'pie',
+        data: {
+           labels: labels,
+           datasets: [{
+             label: "Faction",
+             data: series,
+             backgroundColor: colors
+           }]
+        },
+        options: {
+          legend: {
+            position: 'bottom'
+          },
+          title: {
+            display: true,
+            text: "Cards per faction"
+          },
+          plugins: {
+            labels: {
+              render: 'value'
+            }
+          }
+        }
+      });
+  }
+  
+  function pieType() {
+    var labels = [];
+    var series = [];
+    var colors = [];
+  $.each(decklist({"type_code":{"!=":"warlord_unit"}}).distinct("type"), function (id, title) {
+      labels.push(title);
+      series.push(decklist({"type" : title}).sum("qty"));
+      colors.push(chartColours[title]);
+    });
+    new Chart (
+      $('#pieType').get(0).getContext("2d"),
+      {
+        type: 'pie',
+        data: {
+           labels: labels,
+           datasets: [{
+             label: "Type",
+             data: series,
+             backgroundColor: colors
+           }]
+        },
+        options: {
+          legend: {
+            position: 'bottom'
+          },
+          title: {
+            display: true,
+            text: "Cards per type"
+          },
+          plugins: {
+            labels: {
+              render: 'value'
+            }
+          }
+        }
+      });
+  }
+  
+  function pieShields() {
+    var labels = [];
+    var series = [];
+    var colors = [];
+    var clr;
+    labels.push(0)
+    series.push(
+      decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
+      decklist({"type_code":{"!=":"warlord_unit"},"shields":{isNumber:true}}).sum("qty"));
+    colors.push('rgb(240,240,256)');
+    for (var i=1; i<4; i++) {
+      labels.push(i);
+      series.push(decklist({"shields" : i, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
+      clr = 256 - (i*32);
+      colors.push('rgb(' + clr + ', ' + clr + ', ' + 256 + ')');
+    }
+    new Chart (
+      $('#pieShield').get(0).getContext("2d"),
+      {
+        type: 'pie',
+        data: {
+           labels: labels,
+           datasets: [{
+             label: "Shields",
+             data: series,
+             backgroundColor: colors
+           }]
+        },
+        options: {
+          legend: {
+            position: 'bottom'
+          },
+          title: {
+            display: true,
+            text: "# Shields on cards"
+          },
+          plugins:  {
+            labels: {
+              render: 'label',
+              position: 'outside'
+            }
+            
+          }
+        }
+      });
+  }
+  
+  function pieCommand() {
+    var labels = [];
+    var series = [];
+    var colors = [];
+    var clr;
+    labels.push(0)
+    series.push(
+      decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
+      decklist({"type_code":{"!=":"warlord_unit"},"command_icons":{isNumber:true}}).sum("qty"));
+    colors.push('rgb(240,256,240)');
+    for (var i=1; i<4; i++) {
+      labels.push(i);
+      series.push(decklist({"command_icons" : i, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
+      clr = 256 - (i*32);
+      colors.push('rgb(' + clr + ', ' + 256 + ', ' + clr + ')');
+    }
+    new Chart (
+      $('#pieCommand').get(0).getContext("2d"),
+      {
+        type: 'pie',
+        data: {
+           labels: labels,
+           datasets: [{
+             label: "Command",
+             data: series,
+             backgroundColor: colors
+           }]
+        },
+        options: {
+          legend: {
+            position: 'bottom'
+          },
+          title: {
+            display: true,
+            text: "# Command Icons on cards"
+          },
+          plugins:  {
+            labels: {
+              render: 'label',
+              position: 'outside'
+            }
+            
+          }
+        }
+      });
+  }
+  
+  
   
   function barIcons()  {
     var icons = ["Military","Intrigue","Power"];
