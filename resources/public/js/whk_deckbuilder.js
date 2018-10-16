@@ -556,346 +556,303 @@ $(document).ready(function () {
     $('#planets').html (outp);
   }
   
-// Code to compile data and call Charts scripts
+  // Code to compile data and call Charts scripts
 
 // Pie - faction distribution
 // Pie - Shield Icons
 
 // Line - Cost
 
-  function updateCharts()  {
-    pieFaction();
-    pieType();
-    pieShields();
-    pieCommand();
-    //barIcons();
-    //lineCost();
-    //lineStrength();
-  }
-  
+// define charts
   var chartColours = {
-    "Space Marines": "#DAA520",
-    "Astra Militarum": "#2F4F4F",
-    "Orks": "#006400",
-    "Chaos": "#FF8C00",
-    "Dark Eldar": "#800080",
-    "Eldar": "#FFD700",
-    "Tau": "#87CEFA",
-    "Tyrranids": "#A52A2A",
-    "Necrons": "#008080",
-    "Neutral": "#A9A9A9",
-    "Army Unit": "#AA0000",
-    "Attachment": "#00AA00",
-    "Support": "#0000AA",
-    "Event": "#DDDD00"
-  }
+    "Space Marines": "goldenrod",
+    "Astra Militarum": "darkslategrey",
+    "Orks": "darkgreen",
+    "Chaos": "darkorange",
+    "Dark Eldar": "purple",
+    "Eldar": "gold",
+    "Tau": "lightskyblue",
+    "Tyrranids": "brown",
+    "Necrons": "teal",
+    "Neutral": "darkgrey",
+    "Army Unit": "goldenrod",
+    "Attachment": "lightskyblue",
+    "Support": "lightgray",
+    "Event": "thistle"
+  };
   
-  function pieFaction() {
-    var labels = [];
-    var series = [];
-    var colors = [];
-    $.each(decklist().distinct("faction"), function (id, title) {
-      labels.push(title);
-      series.push(decklist({"faction" : title, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
-      colors.push(chartColours[title]);
-    });
-    new Chart (
-      $('#pieFact').get(0).getContext("2d"),
-      {
-        type: 'pie',
-        data: {
-           labels: labels,
-           datasets: [{
-             label: "Faction",
-             data: series,
-             backgroundColor: colors
-           }]
-        },
-        options: {
-          legend: {
-            position: 'bottom'
-          },
-          title: {
-            display: true,
-            text: "Cards per faction"
-          },
-          plugins: {
-            labels: {
-              render: 'value'
-            }
-          }
-        }
-      });
-  }
-  
-  function pieType() {
-    var labels = [];
-    var series = [];
-    var colors = [];
-  $.each(decklist({"type_code":{"!=":"warlord_unit"}}).distinct("type"), function (id, title) {
-      labels.push(title);
-      series.push(decklist({"type" : title}).sum("qty"));
-      colors.push(chartColours[title]);
-    });
-    new Chart (
-      $('#pieType').get(0).getContext("2d"),
-      {
-        type: 'pie',
-        data: {
-           labels: labels,
-           datasets: [{
-             label: "Type",
-             data: series,
-             backgroundColor: colors
-           }]
-        },
-        options: {
-          legend: {
-            position: 'bottom'
-          },
-          title: {
-            display: true,
-            text: "Cards per type"
-          },
-          plugins: {
-            labels: {
-              render: 'value'
-            }
-          }
-        }
-      });
-  }
-  
-  function pieShields() {
-    var labels = [];
-    var series = [];
-    var colors = [];
-    var clr;
-    labels.push(0)
-    series.push(
-      decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
-      decklist({"type_code":{"!=":"warlord_unit"},"shields":{isNumber:true}}).sum("qty"));
-    colors.push('rgb(240,240,256)');
-    for (var i=1; i<4; i++) {
-      labels.push(i);
-      series.push(decklist({"shields" : i, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
-      clr = 256 - (i*32);
-      colors.push('rgb(' + clr + ', ' + clr + ', ' + 256 + ')');
-    }
-    new Chart (
-      $('#pieShield').get(0).getContext("2d"),
-      {
-        type: 'pie',
-        data: {
-           labels: labels,
-           datasets: [{
-             label: "Shields",
-             data: series,
-             backgroundColor: colors
-           }]
-        },
-        options: {
-          legend: {
-            position: 'bottom'
-          },
-          title: {
-            display: true,
-            text: "# Shields on cards"
-          },
-          plugins:  {
-            labels: {
-              render: 'label',
-              position: 'outside'
-            }
-            
-          }
-        }
-      });
-  }
-  
-  function pieCommand() {
-    var labels = [];
-    var series = [];
-    var colors = [];
-    var clr;
-    labels.push(0)
-    series.push(
-      decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
-      decklist({"type_code":{"!=":"warlord_unit"},"command_icons":{isNumber:true}}).sum("qty"));
-    colors.push('rgb(240,256,240)');
-    for (var i=1; i<4; i++) {
-      labels.push(i);
-      series.push(decklist({"command_icons" : i, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
-      clr = 256 - (i*32);
-      colors.push('rgb(' + clr + ', ' + 256 + ', ' + clr + ')');
-    }
-    new Chart (
-      $('#pieCommand').get(0).getContext("2d"),
-      {
-        type: 'pie',
-        data: {
-           labels: labels,
-           datasets: [{
-             label: "Command",
-             data: series,
-             backgroundColor: colors
-           }]
-        },
-        options: {
-          legend: {
-            position: 'bottom'
-          },
-          title: {
-            display: true,
-            text: "# Command Icons on cards"
-          },
-          plugins:  {
-            labels: {
-              render: 'label',
-              position: 'outside'
-            }
-            
-          }
-        }
-      });
-  }
-  
-  
-  
-  function barIcons()  {
-    var icons = ["Military","Intrigue","Power"];
-    var counts = [0,0,0];
-    
-    decklist({"Type":"Character"}).each(function (char) {
-      $.each(icons, function(idx,icon)  {
-        counts[idx] += ($.inArray(icon,char.Icons) != -1 ? char.qty : 0);
-      });
-    });
-    
-    var ctx = $('#barIcons').get(0).getContext("2d");
-    var bi = new Chart(ctx, {
-      type:  "bar",
-      data:  {
-        labels:  icons,
+  var chart_pf = new Chart (
+    $('#pieFact').get(0).getContext("2d"),
+    {
+      type: 'pie',
+      data: {
+        labels: [], 
         datasets: [{
-          data:    counts,
-          backgroundColor: [
-            'rgb(204, 0, 0)',
-            'rgb(0, 153, 0)',
-            'rgb(0, 0, 153)'
-          ]          
-        }]
-      },
-      options:  {
+           label: "", 
+           data: [], 
+           backgroundColor: []}]},
+      options: {
+        legend: {
+          position: 'bottom'
+        },
         title: {
           display: true,
-          text: 'Icons',
-          fontSize: 24
+          text: "Cards per faction"
         },
-        legend:  {
-          display: false
-        },
-        responsive: true,
-        maintainAspectRatio: true,
-        scales:  {
-          yAxes: [{
-            ticks: {
-              min:  0,
-              stepSize: 1
-            }
-          }]
+        plugins: {
+          labels: {
+            render: 'value'
+          }
         }
       }
-    });
-  }
-  function lineCost()  {
-    var maxVal = decklist({"cost":{"!is":"X"}}).max("cost");
-    var datavals = [];
-    var datacounts = [];
-    for (var i=0; i<= maxVal; i++)  {
-      datavals.push(String(i));
-      datacounts.push(decklist({"cost":i}).sum("qty"));
     }
-    
-    var ctx = $('#lineCost').get(0).getContext("2d");
-    var ls = new Chart(ctx, {
-      type: 'line',
+  );
+
+  var chart_pt = new Chart (
+    $('#pieType').get(0).getContext("2d"),
+    {
+      type: 'pie',
       data: {
-        labels: datavals,
-        datasets:  [{
-          label: "Cost",
-          fill: false,
-          data: datacounts,
-          tension: 0
-        }]
-      },
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]},
       options: {
+        legend: {
+          position: 'bottom'
+        },
         title: {
           display: true,
-          text: 'Cost',
-          fontSize: 24
+          text: "Cards per type"
         },
-        legend:  {
-          display: false
+        plugins: {
+          labels: {
+            render: 'value'
+          }
+        }
+      }
+    }
+  );
+
+  var chart_ps = new Chart (
+    $('#pieShield').get(0).getContext("2d"),
+    {
+      type: 'pie',
+      data: {
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]},
+      options: {
+        legend: {
+          display: false,
+          position: 'bottom'
         },
-        responsive: true,
-        maintainAspectRatio: true,
-        scales:  {
+        title: {
+          display: true,
+          text: "Shields per card"
+        },
+        plugins: {
+          labels: {
+            render: 'value'
+          }
+        }
+      }
+    }
+  );
+  
+  var chart_pc = new Chart (
+    $('#pieCommand').get(0).getContext("2d"),
+    {
+      type: 'pie',
+      data: {
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]},
+      options: {
+        legend: {
+          display: false,
+          position: 'bottom'
+        },
+        title: {
+          display: true,
+          text: "Command Icons per card"
+        },
+        plugins: {
+          labels: {
+            render: 'value'
+          }
+        }
+      }
+    }
+  );
+  
+// Line Cost
+  var chart_lc = new Chart (
+    $('#lineCost').get(0).getContext("2d"),
+    {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: "", data: []
+      }]},
+      options: {
+        legend: {
+          position: 'top'
+        },
+        title: {
+          display: true,
+          text: "# Cards by Cost/Attack/HP",
+          fontSize: 18,
+          fontStyle: 'bold'
+        },
+        scales: {
           yAxes: [{
-            ticks: {
-              min:  0,
-              stepSize: 1
-            },
-            scaleLabel:  {
-              display: true,
-              labelString: "Number of cards"
-            }
-          }],
-          xAxes: [{
             scaleLabel: {
-              display: true,
-              labelString: "Cost (Cost X excluded)"
-            }
-          }]
-        }
-      }
-    });
-  }
-  function lineStrength()  {
-    var _deck = decklist({"Type":["Character","Event","Attachment","Location"]});
-    var maxVal = decklist({"Type":"Character","Strength":{"!is":"X"}}).max("Strength");
-    var datavals = [];
-    var datacounts = [];
-    for (var i=0; i<= maxVal; i++)  {
-      datavals.push(String(i));
-      datacounts.push(decklist({"Type":"Character","Strength":String(i)}).count());
-    }
-    
-    var ctx = $('#lineStr').get(0).getContext("2d");
-    var ls = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: datavals,
-        datasets:  [{
-          label: "Strength",
-          fill: false,
-          data: datacounts,
-          tension: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales:  {
-          yAxes: [{
+              labelString: "# Cards",
+              display: true
+            },
             ticks: {
-              min:  0,
+              beginAtZero: true,
               stepSize: 1
             }
           }]
         }
       }
-    });
+    }
+  );
+    
+  function getChartData_pf () {
+      var data = {
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]}
+      data.datasets[0].label = "Faction";
+      $.each(decklist().distinct("faction"), function (id, title) {
+        data.labels.push(title);
+        data.datasets[0].data.push(decklist({"faction" : title, "type_code":{"!=":"warlord_unit"}}).sum("qty"));
+        data.datasets[0].backgroundColor.push(chartColours[title]);
+      });
+      return data;
+  };
+  
+  function getChartData_pt () {
+      var data = {
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]}
+      data.datasets[0].label = "Type";
+      $.each(decklist({"type_code":{"!=":"warlord_unit"}}).distinct("type"), function (id, title) {
+        data.labels.push(title);
+        data.datasets[0].data.push(decklist({"type" : title}).sum("qty"));
+        data.datasets[0].backgroundColor.push(chartColours[title]);
+      });
+      return data;
+  };
+  
+  function getChartData_ps () {
+      var data = {
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]}
+      data.datasets[0].label = "Shields";
+      var clr;
+      
+      data.labels.push('0 Shields')
+      data.datasets[0].data.push(
+        decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
+        decklist({"type_code":{"!=":"warlord_unit"},"shields":{isNumber:true}}).sum("qty"));
+      data.datasets[0].backgroundColor.push('rgb(240,240,256)');
+      
+      for (var i = 1; i < 4; i++) {
+        data.labels.push(i + ' Shields');
+        data.datasets[0].data.push(decklist({"shields" : i}).sum("qty"));
+        clr = 256 - (i * 32);
+        data.datasets[0].backgroundColor.push('rgb(' + clr + ', ' + clr + ', ' + 256 + ')');
+      };
+      return data;
+  };
+  
+  function getChartData_pc () {
+      var data = {
+        labels: [], 
+        datasets: [{
+           label: "", 
+           data: [], 
+           backgroundColor: []}]}
+      data.datasets[0].label = "Command Icons";
+      var clr;
+      
+      data.labels.push('0 Cmd')
+      data.datasets[0].data.push(
+        decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
+        decklist({"type_code":{"!=":"warlord_unit"},"command_icons":{isNumber:true}}).sum("qty"));
+      data.datasets[0].backgroundColor.push('rgb(256,240,240)');
+      
+      var maxcommand = decklist({"type_code":{"!=":"warlord_unit"}}).max("command_icons");
+      for (var i = 1; i < maxcommand + 1; i++) {
+        data.labels.push(i + ' Cmd');
+        data.datasets[0].data.push(decklist({"type_code":{"!=":"warlord_unit"},"command_icons" : i}).sum("qty"));
+        clr = 256 - (i * 32);
+        data.datasets[0].backgroundColor.push('rgb(' + 256 + ', ' + clr + ', ' + clr + ')');
+      };
+      return data;
+  };
+  
+  function getChartData_lc () {
+    var maxval = Math.max(
+      decklist({"type_code":{"!=":"warlord_unit"}}).max("cost"),
+      decklist({"type_code":{"!=":"warlord_unit"}}).max("attack"),
+      decklist({"type_code":{"!=":"warlord_unit"}}).max("hp")
+      );
+    var data = {
+      labels: [], 
+      datasets: [{
+        label: 'Cost', data: [], 
+        lineTension: 0,
+        fill: false, borderColor: 'blue'
+      },{
+        label: 'Attack', data: [], 
+        lineTension: 0,
+        fill: false, borderColor: 'red'
+      },{
+        label: 'HP', data: [], 
+        lineTension: 0,
+        fill: false, borderColor: 'green'
+      }]
+    };
+    for (var i = 0; i <= maxval; i++)  {
+      data.labels.push(i);
+      data.datasets[0].data.push(decklist({"type_code":{"!=":"warlord_unit"},"cost":i}).sum("qty"));
+      data.datasets[1].data.push(decklist({"type_code":{"!=":"warlord_unit"},"attack":i}).sum("qty"));
+      data.datasets[2].data.push(decklist({"type_code":{"!=":"warlord_unit"},"hp":i}).sum("qty"));
+    };
+    return data;
+  }
+  
+  function updateChart(chart, chartData) {
+    chart.data = chartData;
+    chart.update();
+  }
+
+  function updateCharts()  {
+    updateChart(chart_pf, getChartData_pf()); //Faction
+    updateChart(chart_pt, getChartData_pt()); //Type
+    updateChart(chart_ps, getChartData_ps()); //Shields
+    updateChart(chart_pc, getChartData_pc()); //Command Icons
+    
+    updateChart(chart_lc, getChartData_lc()); //Cost
   }
   
 
