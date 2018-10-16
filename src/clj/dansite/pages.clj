@@ -307,9 +307,9 @@
                             [:canvas#pieCommand {:width "400" :height "400"}]]
                           [:div.col-sm-6
                             [:canvas#pieShield {:width "400" :height "400"}]]]
-                        [:canvas#lineCost {:width "400" :height "400"}]
-                        [:canvas#barIcons {:width "400" :height "400"}]
-                        [:canvas#lineStr {:width "400" :height "400"}]]]]]
+                        [:div.row
+                          [:canvas#lineCost {:width "400" :height "300"}]]
+                      ]]]]
             ;; SETS
                 [:div#decksets.tab-pane {:role "tabpanel"}
                   [:div.row 
