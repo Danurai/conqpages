@@ -60,18 +60,19 @@ function parsefilter(f)	{
 	if (res != null)	{
     outp["cost"] = getNumberFilter(res[1],res[2]);
 	}
+  
 	
-	//var unique = /u:(true|false)/;
-	//res = RegExp(unique).exec(f)
-	//if (res != null)	{
-	//	outp["Unique"] = res[1] == "true";
-	//}
-	//
-	//var loyal = /l:(true|false)/;
-	//res = RegExp(loyal).exec(f)
-	//if (res != null)	{
-	//	outp["Loyal"] = res[1] == "true";
-	//}
+	var unique = /u:(true|false)/;
+	res = RegExp(unique).exec(f)
+	if (res != null)	{
+		outp["unique"] = res[1] == "true";
+	}
+	
+	var loyal = /l:(true|false)/;
+	res = RegExp(loyal).exec(f)
+	if (res != null)	{
+		outp["signature_loyal"] = (res[1] == "true" ? "Loyal" : {"!=":"Loyal"});
+	}
 	
 	if ($.isEmptyObject(outp) && f != "")	{
 		outp["name"] = {likenocase:f.split('|')};
@@ -92,6 +93,9 @@ function getNumberFilter(op,val)  {
       break;
     case '<':
       numberFilter  = {"<":value};
+      break;
+    case '!':
+      numberFilter  = {"!=":value};
       break;
   }
   return numberFilter;

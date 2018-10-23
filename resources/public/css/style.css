@@ -3,6 +3,21 @@
 body { font-family: 'Exo 2', sans-serif; }
 a    { color: darkslategrey; fill: darkslategrey; }
 
+#cardtbl .sortable {cursor: pointer;}
+#cardtbl td {position: relative}
+
+label.disabled {
+  cursor: not-allowed;
+}
+.btn-outline-secondary.disabled {
+  background-color: lightgray !important;
+}
+.caret {
+  position: absolute;
+  bottom: 0px;
+  color: red;
+}
+
 .navbar-brand:hover,
 .navbar-nav > .nav-item > a:hover  
   {background-color: lightseagreen; fill: lightseagreen;}

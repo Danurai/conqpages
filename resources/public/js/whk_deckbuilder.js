@@ -6,10 +6,13 @@ $(document).ready(function () {
   
   var decklist = TAFFY();
   
-  var filter = {};
-  var typFilter = ["army_unit"];
-  var facFilter = [];
-  var setFilter = [];
+  var p_fac = "";
+  var filter_base = {"type_code":"army_unit"};
+  var filter_base_type = ["warlord_unit","synapse_unit","army_unit","attachment","event","support"];
+  var filter_factions = [{},{}];
+  var filter_custom = {};
+  
+  var orders = 'type asec, name asec';
   
   var _planets;
   var _sets;
@@ -25,20 +28,33 @@ $(document).ready(function () {
     event:        '<i class="fas fa-bolt"></i>',
     support:      '<i class="fas fa-hands-helping"></i>',
     synapse_unit: '<i class="fas fa-dna"></i>'
-    }
+  }
   
 // Markdown
   var converter = new showdown.Converter()
   
 /* INITIALISATION */
-  $.getJSON("/api/data/cards", function (data) { _cards = TAFFY(data.data);   //,{_: new Date().getTime()} to force update
+  $.getJSON("/api/data/cards", function (data) { 
+    _cards = TAFFY(data.data);   //,{_: new Date().getTime()} to force update
+    // update blank \ missing values for sorting
+    _cards({"command_icons":""}).update("command_icons",0);
+    _cards().each(function (card) { // pre-populate zeroes.... data to be fixed
+      $.each(["cost","command_icons","shields","attack","hp"], function (id,field)  {
+        if (typeof card[field] === 'undefined') {
+          _cards({"code":card.code}).update(field,0);
+        }
+      });
+    });
+    
     $.getJSON("/api/data/factions", function (data) { _factions = TAFFY(data.data);
       $.getJSON("/api/data/cycles", function (data) { _cycles = TAFFY(data.data);
         $.getJSON("/api/data/packs", function (data) { _sets = TAFFY(data.data);
           _planets = JSON.parse(_cards({"type_code":"planet"}).stringify());
+                    
           writeSets();
           loadDeck();
-          writedeck();
+          writeDeck();
+          
           updateTableBody();
         });
       });
@@ -77,8 +93,7 @@ $(document).ready(function () {
         + '<input type="radio" name="qty-' + card.code + '" value="' + i + '">' + i + '</label>';
       }
     }
-    btns += '</div>';
-    
+    btns += '</div>';    
     
     outp = '<div class="modal-dialog">'
             + '<div class="modal-content">'
@@ -105,49 +120,47 @@ $(document).ready(function () {
   $('#tablebody').on('change','input[type=radio]:enabled',function() {
     updateDeck(this.name.substring(4), parseInt($(this).val(),10));
   });
-  
-  $('#factionfilter').on('change','input[type=checkbox]', function() {
-    var idx = $.inArray($(this).attr('name'),facFilter);
-    if (idx == -1 && this.checked) {
-      facFilter.push ($(this).attr('name'));
-    } else {
-      if (!this.checked) {
-        facFilter.splice(idx,1);
-      }
-    }
-    
-    if (facFilter.length > 0) {
-      filter['Faction'] = facFilter;
-    } else {
-      delete filter.Faction;
-    }
+ 
+  $('#factionfilter').on('change', function() {
+    var facs = [];
+    $.each($(this).find('input:checked'), function (k,v) {
+      facs.push(v.name);
+    });
+    update_filter_factions(facs);
     updateTableBody();
-  });
-  
-  $('#typefilter').on('change','input[type=checkbox]', function() {
-    var idx = $.inArray($(this).attr('name'),typFilter);
-    if (idx == -1 && this.checked) {
-      typFilter.push ($(this).attr('name'));
-    } else {
-      if (!this.checked) {
-        typFilter.splice(idx,1);
-      }
-    }
-    //TODO - EMPTY FACTIONS
-    if (facFilter.length > 0) {
-      filter['Faction'] = facFilter;
-    } else {
-      delete filter.Faction;
-    }
-    updateTableBody();
-  });
+  });  
   
   $('#filterlist').on('input', function () {
+    filter_custom = parsefilter($(this).val());
     updateTableBody()
   });
-
-  // Deck Format  
   
+  $('#typefilter').on('change', function() {
+    var typs = [];
+    $.each($(this).find('input:checked'), function (k, v) {
+      typs.push(v.name);
+    });
+    filter_base.type_code = (typs.length == 0 ? filter_base_type : typs);
+    updateTableBody();
+  });
+
+  $('thead').on('click', '.sortable', function () {
+    var field = $(this).data('field');
+    switch(orders)  {
+      case field + ' desc': orders = field + ' asec'; break;
+      case field + ' asec': orders = ''; break;
+      default: orders = field + ' desc';
+    }
+    $.each(this.parentNode.getElementsByClassName("caret"), function (id, node) {
+      node.remove();
+    });
+    if (orders != "") {
+      $(this).append('<span class="caret"><i class="fas fa-caret-' + (orders.slice(-4) == "asec" ? 'up' : 'down') + '"></span>');
+    }
+    updateTableBody();
+  });
+  
+  // Deck Format  
   function updateDeck(cardcode, cardqty)  {
     var card = _cards({"code":cardcode}).first();
     card["qty"] = cardqty;
@@ -170,53 +183,17 @@ $(document).ready(function () {
         if (card.qty>0) {decklist.insert(card);}
     }
     
-    writedeck();
+    writeDeck();
     updateTableBody();
   }
   
   function updateTableBody() {
-  
   // Build Filter, clear and re-write 
   
-    var faction_code = decklist({"type_code":"warlord_unit"}).first().faction_code;
-    if (typeof faction_code == 'undefined') { faction_code = ""; }
-    // Filter Buttons
-    var ally_codes = getAllyCodes(faction_code);
-    
-    $('#factionfilter label').each(function (id,lbl) {
-      $(lbl).removeClass('disabled');
-    });
-    
-    if (ally_codes.length > 0)  {
-      ally_codes.push("neutral");
-      $('#factionfilter label').each(function (id,lbl) {
-        if ($.inArray($(lbl).find('input')[0].name, ally_codes) == -1) {
-          $(lbl).addClass('disabled');
-          $($(lbl).find('input')[0]).prop('checked', false);
-        } 
-      });
-    }  
-    
-    //default exclude planet and token
-    filter = {"type_code":["army_unit","warlord_unit","attachment","event","synapse_unit","support"]};
-    
-    if (facFilter != '') {filter["faction_code"] = facFilter;} else {
-      if (ally_codes.length > 0) {filter["faction_code"] = ally_codes;}
-    }
-    if (typFilter != '') {filter["type_code"] = typFilter;}
-    if (setFilter.length > 0) {filter["pack_code"] = setFilter}
-    
-    // Add text filter    
-    var f = parsefilter($('#filterlist').val());     
-    if ( $.isEmptyObject(f) == false) {
-      $.extend(filter, f);
-    }
-    
-    $('#tablebody').empty();
-    
-    //console.log (filter);
-    
-    _cards(filter).order("type, name").each(function(r) {
+    var results = _cards(filter_base,filter_factions).filter(filter_custom).order(orders + ", name");
+  
+    $('#tablebody').empty();   
+    results.each(function(r) {
       $('#tablebody').append (buildRow(r));
     });
   }
@@ -277,21 +254,18 @@ $(document).ready(function () {
     }
     return maxallowed;
   }
-  function getAllyCodes(faction_code) {
-    var ally_codes = _factions({"code":faction_code}).first().ally_codes;
-    if (typeof ally_codes == 'undefined') {ally_codes = [];}
-    if (faction_code != "") {ally_codes.push(faction_code)};    
-    return ally_codes;
-  }
   
 // Write Deklist, update charts and sample draw
-  function writedeck()  {
+  function writeDeck()  {
     var outp = '';
     var faction; 
     var faction_code;
     
     var identity = decklist({"type_code":"warlord_unit"}).first();
     faction_code = typeof identity == 'undefined' ? 'neutral' : identity.faction_code;
+    if (faction_code != p_fac) {  // Initial setup or Warlord has changed!
+      set_primary_faction(faction_code);
+    }
     
     var deckTypes = ["Army Unit","Synapse Unit","Attachment","Event","Support"];
     var numcards = decklist({"type_code":{"!is":"warlord_unit"}}).sum("qty");
@@ -384,6 +358,52 @@ $(document).ready(function () {
     return (validresult.length > 0 ? validresult.join('<br />') : "Deck is Valid");
   }
 
+// filter code
+  function set_primary_faction(fac) {
+    var a_fac = [];
+    p_fac = fac;
+    a_fac = $.merge(["neutral",p_fac],_factions({"code":p_fac}).first().ally_codes);
+    
+    // reset faction_selection
+    $('#factionfilter').find('input:checked').prop('checked',false);
+    $('#factionfilter').find('label').removeClass('active');
+    
+    $.each($('#factionfilter').find('input'),function (id, ele) {
+      if (a_fac.indexOf(ele.name) > -1) {
+        $(ele.parentNode).removeClass('disabled');
+        $(ele).removeAttr('disabled');
+      } else {
+        $(ele.parentNode).addClass('disabled');
+        $(ele).attr('disabled',true);
+      }
+    });
+    
+    update_filter_factions(a_fac);
+  }
+  
+  // build faction filter  
+  function update_filter_factions(facs) {
+    var i = facs.indexOf(p_fac);
+    
+    if (i < 0)  { //Primary faction NOT included in filter
+      if (facs.length == 0) {
+        update_filter_factions($.merge(["neutral",p_fac],_factions({"code":p_fac}).first().ally_codes));
+      } else {
+         filter_factions = [{"faction_code":facs,"signature_loyal":{"isNull":true}}];
+      }
+    } else {      //Primary faction IS included in filter
+      facs.splice(i,1);
+      // NOTE: "faction_code":[] returns no records, which is good. Alt is to not include the filter - faster? more readable?
+      if (facs.length == 0) {
+        filter_factions = [{"faction_code":p_fac,"signature_loyal":{"!=":"Signature"}}];
+      } else {
+        filter_factions = [{"faction_code":p_fac,"signature_loyal":{"!=":"Signature"}},{"faction_code":facs,"signature_loyal":{"isNull":true}}];
+      }
+    }
+    
+    updateTableBody();
+  }
+  
 /* NOTES TAB */
   $('#tags').on('change',function () {
     $('#deck-tags').val ($(this).val());
@@ -490,7 +510,7 @@ $(document).ready(function () {
   
   function updateSetFilter() {
     /* build set filter */
-    setFilter = [];
+    var setFilter = [];
     _sets().each( function(set) {
       if (set.code == 'core') {
         setFilter.push ('core');
@@ -500,7 +520,7 @@ $(document).ready(function () {
         }
       }
     });
-    filter['setcode'] = setFilter;
+    filter_base.pack_code = setFilter;
   }
     
 /* CHECK TAB */
@@ -928,7 +948,7 @@ $(document).ready(function () {
     console.log (decklist);
     
     updateTableBody();
-    writedeck();
+    writeDeck();
     
     newGame();
   });
