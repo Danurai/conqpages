@@ -217,43 +217,46 @@
               [:div.tab-content.my-2
             ;; BUILD
                 [:div#deckbuild.tab-pane.active {:role "tabpanel"}
-                  [:div.row
-                    [:div.col-md  
-                      [:input#filterlist.form-control.my-1 {:type "text" :placeholder "Filter List"}]]]
                   [:div.row.my-1
                     [:div.col
-                      [:div#factionfilter.btn-group-sm.btn-group.btn-group-toggle.mr-1.my-1 {:data-toggle "buttons"}
-                        [:label.btn.btn-outline-secondary {:title "Space Marines"} [:input {:type "checkbox" :autocomplete "off" :name "space_marines"} (icon-svg "space_marines")]]
-                        [:label.btn.btn-outline-secondary {:title "Astra Militarum"} [:input {:type "checkbox" :autocomplete "off" :name "astra_militarum"} (icon-svg "astra_militarum")]]
-                        [:label.btn.btn-outline-secondary {:title "Orks"} [:input {:type "checkbox" :autocomplete "off" :name "orks"} (icon-svg "orks")]]
-                        [:label.btn.btn-outline-secondary {:title "Chaos"} [:input {:type "checkbox" :autocomplete "off" :name "chaos"} (icon-svg "chaos")]]
-                        [:label.btn.btn-outline-secondary {:title "Dark Eldar"} [:input {:type "checkbox" :autocomplete "off" :name "dark_eldar"} (icon-svg "dark_eldar")]]
-                        [:label.btn.btn-outline-secondary {:title "Eldar"} [:input {:type "checkbox" :autocomplete "off" :name "eldar"} (icon-svg "eldar")]]
-                        [:label.btn.btn-outline-secondary {:title "Tau"} [:input {:type "checkbox" :autocomplete "off" :name "tau"} (icon-svg "tau")]]
-                        [:label.btn.btn-outline-secondary {:title "Tyranids"} [:input {:type "checkbox" :autocomplete "off" :name "tyranids"} (icon-svg "tyranids")]]
-                        [:label.btn.btn-outline-secondary {:title "Necrons"} [:input {:type "checkbox" :autocomplete "off" :name "necrons"} (icon-svg "necrons")]]
-                        [:label.btn.btn-outline-secondary {:title "Neutral"} [:input {:type "checkbox" :autocomplete "off" :name "neutral"} [:i.fas.fa-plus]]]]
+                      [:div#factionfilter.btn-toolbar {:role "toolbar"}
+                        [:div.btn-group-sm.btn-group.btn-group-toggle.mr-1.my-1 {:data-toggle "buttons"}
+                          [:label.btn.btn-outline-secondary {:title "Space Marines" :name "space_marines"} [:input {:type "checkbox" :autocomplete "off" :name "space_marines"} (icon-svg "space_marines")]]
+                          [:label.btn.btn-outline-secondary {:title "Astra Militarum" :name "astra_militarum"} [:input {:type "checkbox" :autocomplete "off" :name "astra_militarum"} (icon-svg "astra_militarum")]]
+                          [:label.btn.btn-outline-secondary {:title "Orks" :name "orks"} [:input {:type "checkbox" :autocomplete "off" :name "orks"} (icon-svg "orks")]]
+                          [:label.btn.btn-outline-secondary {:title "Chaos" :name "chaos"} [:input {:type "checkbox" :autocomplete "off" :name "chaos"} (icon-svg "chaos")]]
+                          [:label.btn.btn-outline-secondary {:title "Dark Eldar" :name "dark_eldar"} [:input {:type "checkbox" :autocomplete "off" :name "dark_eldar"} (icon-svg "dark_eldar")]]
+                          [:label.btn.btn-outline-secondary {:title "Eldar" :name "eldar"} [:input {:type "checkbox" :autocomplete "off" :name "eldar"} (icon-svg "eldar")]]
+                          [:label.btn.btn-outline-secondary {:title "Tau" :name "tau"} [:input {:type "checkbox" :autocomplete "off" :name "tau"} (icon-svg "tau")]]
+                          [:label.btn.btn-outline-secondary {:title "Neutral"} [:input {:type "checkbox" :autocomplete "off" :name "neutral"} [:i.fas.fa-plus]]]]
+                        
+                        [:div.btn-group-sm.btn-group.btn-group-toggle.mr-1.my-1 {:data-toggle "buttons"}  
+                          [:label.btn.btn-outline-secondary {:title "Tyranids"} [:input {:type "checkbox" :autocomplete "off" :name "tyranids"} (icon-svg "tyranids")]]
+                          [:label.btn.btn-outline-secondary {:title "Necrons"} [:input {:type "checkbox" :autocomplete "off" :name "necrons"} (icon-svg "necrons")]]]]
                       [:div#typefilter.btn-group.btn-group-sm.btn-group-toggle.mr-auto.my-1 {:data-toggle "buttons"}
                         [:label.btn.btn-outline-secondary {:title "Warlord"} [:input {:type "checkbox" :autocomplete "off" :name "warlord_unit"} [:i.fas.fa-user-circle]]]
                         [:label.btn.btn-outline-secondary.active {:title "Army"} [:input {:type "checkbox" :autocomplete "off" :name "army_unit" :checked true} [:i.fas.fa-users]]]
                         [:label.btn.btn-outline-secondary {:title "Attachment"} [:input {:type "checkbox" :autocomplete "off" :name "attachment"} [:i.fas.fa-user-plus]]]
                         [:label.btn.btn-outline-secondary {:title "Event"} [:input {:type "checkbox" :autocomplete "off" :name "event"} [:i.fas.fa-bolt]]]
-                        [:label.btn.btn-outline-secondary {:title "Support"} [:input {:type "checkbox" :autocomplete "off" :name "support"} [:i.fas.fa-hands-helping]]]
+                        [:label.btn.btn-outline-secondary {:title "Support"} [:input {:type "checkbox" :autocomplete "off" :name "support"} [:i.fas.fa-building]]]  ;fa-hands-helping]]]
                         [:label.btn.btn-outline-secondary {:title "Synapse"} [:input {:type "checkbox" :autocomplete "off" :name "synapse_unit"} [:i.fas.fa-dna]]]]]]
+                  [:div.row
+                    [:div.col-md  
+                      [:input#filterlist.form-control.my-1 {:type "text" :placeholder "Filter Results (or search for card)" :title "* name\nx: text\ne: set code\nf: faction code\nr? cost\ns? shields\nc? command icons\na? attack\nh? hp\nu:true|false unique\nl:true|false loyal\n\n? operators : > < !"}]]]
                   [:div.row
                     [:div.col
                       [:table#cardtbl.table.table-hover.table-sm
                         [:thead.thead-dark
                           [:tr
                             [:td "Quantity"]
-                            [:td "Name"]
-                            [:td "Type"]
-                            [:td "Fac."]
-                            [:td {:title "Cost"} [:i.fas.fa-cog]]
-                            [:td {:title "Command"} [:i.fas.fa-gavel]]
-                            [:td {:title "Shields"} [:i.fas.fa-shield-alt]]
-                            [:td {:title "Attack"} [:i.fas.fa-bolt]]
-                            [:td {:title "HP"} [:i.fas.fa-heartbeat]]]]
+                            [:td.sortable {:title "Name" :data-field "name"} "Name"]
+                            [:td.sortable {:title "Type" :data-field "type"} "Type"]
+                            [:td.sortable {:title "Faction" :data-field "faction"} "Fac."]
+                            [:td.sortable {:title "Cost" :data-field "cost"} [:i.fas.fa-cog]]
+                            [:td.sortable {:title "Command" :data-field "command_icons"} [:i.fas.fa-gavel]]
+                            [:td.sortable {:title "Shields" :data-field "shields"} [:i.fas.fa-shield-alt]]
+                            [:td.sortable {:title "Attack" :data-field "attack"} [:i.fas.fa-bolt]]
+                            [:td.sortable {:title "HP" :data-field "hp"} [:i.fas.fa-heartbeat]]]]
                         [:tbody#tablebody]]]]]
             ;; NOTES
                 [:div#decknotes.tab-pane {:role "tabpanel"}
