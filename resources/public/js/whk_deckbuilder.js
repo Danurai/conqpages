@@ -61,6 +61,35 @@ $(document).ready(function () {
     });
   });
   
+  // typeahead 
+  $('#filterlist')
+    .typeahead({
+      hint: true,
+      highlight: true,
+      minLength: 2
+    },
+    {
+      name: 'cardnames',
+      source: function findMatches(q,cb) {
+                cb(_cards({"name":{"likenocase":q},
+                           "pack_code":filter_base.pack_code},
+                           [{"faction_code":p_fac,
+                             "signature_loyal":{"!=":"Signature"}},
+                            {"faction_code":$.merge(["neutral"],_factions({"code":p_fac}).first().ally_codes),
+                             "signature_loyal":{"isNull":true}}]).select("name"));}
+    })
+    .on('typeahead:select typeahead:autocomplete', function(ev, suggestion) {
+      var trigger = $(this);
+      $('#cardmodal').on('hidden.bs.modal',function() {
+        setTimeout(function () {
+          trigger.typeahead('val','').trigger('input').focus();
+        },100);
+      });
+      var card = _cards({"name":suggestion}).first();
+      setcardmodal(card)
+      $('#cardmodal').modal('show');
+    }); 
+  
   function loadDeck() {
     if ($.parseJSON($('#deck-content').val() != "")) {
       var deck = $.parseJSON($('#deck-content').val());
@@ -77,9 +106,11 @@ $(document).ready(function () {
 /* Decklist Listeners*/
   $(document).on('click','.card-tooltip',function (e) {
     e.preventDefault();
-    var outp = '';
     var card = _cards({"code":String($(this).data("code"))}).first();
-    
+    setcardmodal(card);
+  });
+ function setcardmodal(card) {
+    var outp = '';
     var maxallowed = maxindeck(card);
     var inset = decklist({"code":card.code}).count() != 0 ? decklist({"code":card.code}).first().qty : 0;
     
@@ -109,11 +140,19 @@ $(document).ready(function () {
           + '</div>';
     
     $('#cardmodal').html (outp);
-  });
-  $('#cardmodal').on('change','input[type=radio]',function () {
-    updateDeck(this.name.substring(4), parseInt($(this).val(),10));
-    $('#cardmodal').modal('hide');
-  });
+  }
+  
+  $('#cardmodal')
+    .on('change','input[type=radio]',function () {
+      updateDeck(this.name.substring(4), parseInt($(this).val(),10));
+      $('#cardmodal').modal('hide');
+    })
+    .on('keypress',function (ev)  {
+      var num = parseInt(ev.which, 10) - 48;
+      $('.modal input[type=radio][value=' + num + ']').trigger('change');
+    });
+  
+  
   
   /* BUILD TAB */
 
@@ -788,14 +827,14 @@ $(document).ready(function () {
            backgroundColor: []}]}
       data.datasets[0].label = "Shields";
       var clr;
-      
+      /*
       data.labels.push('0 Shields')
       data.datasets[0].data.push(
         decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
         decklist({"type_code":{"!=":"warlord_unit"},"shields":{isNumber:true}}).sum("qty"));
       data.datasets[0].backgroundColor.push('rgb(240,240,256)');
-      
-      for (var i = 1; i < 4; i++) {
+      */
+      for (var i = 0; i < 4; i++) {
         data.labels.push(i + ' Shields');
         data.datasets[0].data.push(decklist({"shields" : i}).sum("qty"));
         clr = 256 - (i * 32);
@@ -813,15 +852,15 @@ $(document).ready(function () {
            backgroundColor: []}]}
       data.datasets[0].label = "Command Icons";
       var clr;
-      
+      /*
       data.labels.push('0 Cmd')
       data.datasets[0].data.push(
         decklist({"type_code":{"!=":"warlord_unit"}}).sum("qty") - 
         decklist({"type_code":{"!=":"warlord_unit"},"command_icons":{isNumber:true}}).sum("qty"));
       data.datasets[0].backgroundColor.push('rgb(256,240,240)');
-      
+      */
       var maxcommand = decklist({"type_code":{"!=":"warlord_unit"}}).max("command_icons");
-      for (var i = 1; i < maxcommand + 1; i++) {
+      for (var i = 0; i < maxcommand + 1; i++) {
         data.labels.push(i + ' Cmd');
         data.datasets[0].data.push(decklist({"type_code":{"!=":"warlord_unit"},"command_icons" : i}).sum("qty"));
         clr = 256 - (i * 32);
