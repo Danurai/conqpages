@@ -180,6 +180,7 @@
       misc/pretty-head
       (h/include-js "https://cdnjs.cloudflare.com/ajax/libs/showdown/1.8.6/showdown.min.js")  ; Markdown Converter
       (h/include-css "/css/deckstyle.css")
+      (h/include-js "/js/externs/typeahead.js")
       (h/include-js "/js/whk_tools.js")
       (h/include-js "/js/whk_qtip.js")
       (h/include-js "/js/whk_deckbuilder.js")
@@ -188,6 +189,7 @@
       (h/include-js "/js/externs/chartjs-plugin-labels.min.js")
       [:body
         (misc/navbar req)
+        [:div#cardmodal.modal {:role "dialog" :tabindex -1}]
         [:div.container
           [:div.alert.alert-dismissible.fade.show {:role "alert"}]
           [:div.row.my-2
@@ -317,8 +319,7 @@
                 [:div#decksets.tab-pane {:role "tabpanel"}
                   [:div.row 
                     [:div#setlist.ml-3]]]]]]]
-        [:div.border-top.border-dark.bg-secondary.text-light.px-3.pb-5 "Information"]
-        [:div#cardmodal.modal {:role "dialog"}]])))
+        [:div.border-top.border-dark.bg-secondary.text-light.px-3.pb-5 "Information"]])))
    
 (defn collection [req]
   (h/html5
