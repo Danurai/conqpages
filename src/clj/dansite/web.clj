@@ -22,10 +22,22 @@
   (redirect "/decks"))
  
 (defroutes deck-routes
+  
+  ;;\\localhost:9000/decks/test used to test POST of deck JSON to /decks/new/
+  ;;(GET "/test" []
+  ;;  (h/html5 
+  ;;    misc/pretty-head
+  ;;    [:div.container.my-3
+  ;;      [:form.form {:method "POST" :action "/decks/new/"}
+  ;;        [:input.form-control {:name "deck"}]
+  ;;        [:button.btn.btn-primary {:type "submit"} "Load"]]]))
+          
   (GET "/" []
     pages/decklist)
   (GET "/new" []
     pages/newdeck)
+  (ANY "/new/" []
+    pages/deckbuilder)
   (GET "/new/:id" []
     pages/deckbuilder)
   (GET "/edit/:id" []
@@ -99,6 +111,13 @@
     (GET "/cycles" [] (content-type (response (slurp (io/resource "data/wh40k_cycles.min.json"))) "application/json"))
     (GET "/factions" [] (content-type (response (slurp (io/resource "data/wh40k_factions.min.json"))) "application/json"))
     (GET "/types" [] (content-type (response (slurp (io/resource "data/wh40k_types.min.json"))) "application/json")))
+  (GET "/api/deck/:id" [id]
+    (let [deck (db/get-user-deck id)] 
+      (content-type (response
+        (-> deck  
+           (dissoc :data :uid :author)
+           (assoc :data (json/read-str (:data deck) :key-fn keyword))
+           json/write-str)) "application/json")))
   (resources "/"))
    
 (def app 

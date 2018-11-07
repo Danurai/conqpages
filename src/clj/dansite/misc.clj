@@ -25,6 +25,7 @@
   [:head
   ;; Meta Tags
     [:meta {:charset "UTF-8"}]
+    ;[:meta {:http-equiv "Content-Type" :content "text/html;charset=UTF-8"}]
     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
   ;; jquery and popper
     [:script {:src "https://code.jquery.com/jquery-3.3.1.min.js" :integrity "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" :crossorigin "anonymous"}]
@@ -77,7 +78,7 @@
             [:div.input-group
               [:input.form-control {:type "search" :placeholder "Card Search" :name "q" :aria-label "Search"}]
               [:div.input-group-append
-                [:div.input-group-text.bg-dark.qtip-search
+                [:div.input-group-text.qtip-search {:style "background-color: #006060;"}
                   [:i.fas.fa-info-circle.text-white]]]]]
     ;; Login Icon
           [:span.nav-item.dropdown

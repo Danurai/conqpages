@@ -55,6 +55,17 @@
         (filter #(= (:code %) (key code)))
         first)
     :qty (val code)))
+    
+(defn- deck-card-list-by-type [type_code cards-in-deck]
+  (let [cid-by-type (filter #(= (:type_code %) type_code) cards-in-deck)]
+    [:div
+      [:div [:b (str (-> cid-by-type first :type) " (" (->> cid-by-type (map :qty) (reduce +)) ")")]]
+      (map (fn [r] 
+            [:div (str (:qty r) "x ")
+              [:a.card-tooltip {:href"#" :data-code (:code r) :class (:faction_code r)} (:name r)]
+              (if (= (:signature_loyal r) "Signature") [:i.fa.fa-sm.fa-cog.ml-1.icon-sig])
+              (if (= (:signature_loyal r) "Loyal") [:i.fa.fa.sm.fa-cog.ml-1.icon-loyal])
+            ]) cid-by-type)]))
         
 (defn- deck-card [deck]
   (let [cards-in-deck (map #(get-card %) (-> deck :data json/read-str))
@@ -70,21 +81,26 @@
           [:div.col-sm-3.d-none.d-sm-block
             [:div.warlord-thumb.ml-auto.border.border-secondary.rounded {:style (str "background-image: url(" (:img warlord) ");")}]]]]
       [:div.collapse.px-3.py-1 {:data-parent "#accordian" :id (:uid deck)}
+        ; Decklist
         [:div.row
           [:div.col-sm-12
             [:div.text-muted (str "Cards " (->> cards-in-deck (filter #(not= "warlord_unit" (:type_code %))) (map :qty) (reduce +)) "/50")]]]
         [:div.row.mb-2
           [:div.col-sm-6 
-            (map (fn [r] [:div (str (:qty r) "x ")
-                          [:a {:href"#"} (:name r)]]) cards-in-deck) ]
-          [:div.col-sm-6]]
+            (deck-card-list-by-type "army_unit" cards-in-deck)]
+          [:div.col-sm-6
+            (deck-card-list-by-type "attachment" cards-in-deck)
+            (deck-card-list-by-type "event" cards-in-deck)
+            (deck-card-list-by-type "support" cards-in-deck)
+            ]]
         [:div.row.mb-2
           [:div.small.col-sm-12.text-muted (str "Created on " (-> deck :created c/from-long))]
           [:div.small.col-sm-12.text-muted (str "Updated on " (-> deck :updated c/from-long))]]
         [:div.row.mb-2
           [:div.col-sm-12
             [:a.btn.btn-sm.btn-primary.mr-1 {:href (str "/decks/edit/" (:uid deck))} [:i.fas.fa-edit.mr-1] "Edit"]
-            [:button.btn.btn-sm.btn-danger.btn-delete.mr-1 {:data-deckuid (:uid deck) :data-deckname (:name deck)} [:i.fas.fa-times.mr-1] "Delete"]]]
+            [:button.btn.btn-sm.btn-danger.btn-delete.mr-1 {:data-deckuid (:uid deck) :data-deckname (:name deck)} [:i.fas.fa-times.mr-1] "Delete"]
+            [:button.btn.btn-sm.btn-outline-secondary.btn-export {:type "button" :data-toggle "modal" :data-target "#exportdeck" :data-deckid (:uid deck)} "Export"]]]
         ]]))
 
 (defn home [req]
@@ -105,6 +121,7 @@
     (h/html5
       misc/pretty-head
       (h/include-js "/js/whk_deck_list.js")
+      (h/include-js "/js/whk_qtip.js")
       [:body
         (misc/navbar req)
         [:div.container.my-2
@@ -132,14 +149,33 @@
                   [:input#deletedeckuid {:name "deletedeckuid" :hidden true}]
                   [:button.btn.btn-danger {:type "submit" } "Delete"]]]]]]
         [:div#loaddeck.modal {:role "dialog"}
-          [:div.modal-dialog {:role "document"}
+          [:div.modal-dialog.modal-lg {:role "document"}
             [:div.modal-content
               [:div.modal-header "Load Deck"
                 [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-                  [:span {:aria-hidden "true"} "&times;"]]]
-              [:div.modal-body "Load form goes here"]
+                  [:span {:aria-hidden "true"} "x"]]]
+              [:div.modal-body
+                [:div.container-fluid
+                  [:div.row
+                    [:div.col-sm-6 
+                      [:div "Paste Decklist below"]
+                      [:textarea#importdecklist.form-control {:rows "10"}]]
+                    [:div.col-sm-6
+                      [:div#parseddecklist.border.border-secondary {:style "overflow-y:scroll;height:280px;white-space:pre-wrap;"}]]]]]
               [:div.modal-footer
-                [:button.btn.btn-primary {:type "button"} "Save changes"]
+                [:form {:action "/decks/new/" :method "post"}
+                  [:input#deckjson {:hidden true :name "deck"}]
+                  [:button.btn.btn-primary {:type "submit"} "Load Deck"]]
+                [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]
+        [:div#exportdeck.modal {:role "dialog"}
+          [:div.modal-dialog {:role "document"}
+            [:div.modal-content
+              [:div.modal-header "Export Deck"
+                [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+                  [:span {:aria-hidden "true"} "x"]]]
+              [:div.modal-body 
+                [:textarea.form-control {:rows "10"}]]
+              [:div.modal-footer
                 [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]])))
 
 (defn newdeck [req]
@@ -165,6 +201,7 @@
 (defn get-deck-data
   ; id is numeric 5 digits - new deck
   ; id is alphanumeric 6 digits - existing deck
+  ; TODO req contains deckdata - load deck POSTed
   [req]
   (if (some? (re-matches #"/decks/new/[0-9]{6}" (-> req :uri)))
       {:data (-> req :params :id misc/signature-squad-decklist json/write-str)
@@ -172,7 +209,10 @@
       (let [deck (get-user-deck (-> req :params :id))]
         (if (some? deck)
             deck
-            {}))))
+            (if (some? (-> req :params :deck))
+              (let [deck (json/read-str (-> req :params :deck) :key-fn keyword)]
+                (assoc deck :data (-> deck :data json/write-str)))
+              {})))))
             
 (defn deckbuilder [req]
   (let [deck (get-deck-data req)]
