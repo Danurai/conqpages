@@ -894,8 +894,8 @@ $(document).ready(function () {
     for (var i = 0; i <= maxval; i++)  {
       data.labels.push(i);
       data.datasets[0].data.push(decklist({"type_code":{"!=":"warlord_unit"},"cost":i}).sum("qty"));
-      data.datasets[1].data.push(decklist({"type_code":{"!=":"warlord_unit"},"attack":i}).sum("qty"));
-      data.datasets[2].data.push(decklist({"type_code":{"!=":"warlord_unit"},"hp":i}).sum("qty"));
+      data.datasets[1].data.push(decklist({"type_code":"army_unit","attack":i}).sum("qty"));
+      data.datasets[2].data.push(decklist({"type_code":"army_unit","hp":i}).sum("qty"));
     };
     return data;
   }
