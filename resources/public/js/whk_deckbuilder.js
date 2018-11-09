@@ -1,10 +1,9 @@
 /* Deckbuilder Script */
 
 var _cards;
+var decklist = TAFFY();
 
 $(document).ready(function () {
-  
-  var decklist = TAFFY();
   
   var p_fac = "";
   var filter_base = {"type_code":"army_unit"};
@@ -615,7 +614,7 @@ $(document).ready(function () {
     $('#planets').html (outp);
   }
   
-  // Code to compile data and call Charts scripts
+// Code to compile data and call Charts scripts
 
 // Pie - faction distribution
 // Pie - Shield Icons
@@ -915,84 +914,6 @@ $(document).ready(function () {
   }
   
 
-/* LOAD TAB */
-/*
-  function writeoutput() {
-    var exp = '';
-    var n = 0;
-    
-    exp = $('#deck-name').val() + '\n\n';
-    exp += '\nTotal Cards: (' + decklist({"type_code":{"!is":"warlord_unit"}}).sum("qty") + ')';
-    $.each(["Warlord Unit","Army Unit","Synapse Unit","Attachment","Event","Support",],function (id,type) {
-      n = decklist({"type":type}).sum("qty");
-      if (n > 0) {
-        exp += '\n\n' + type + ': (' + n + ')';
-        decklist({"type":type}).order("name").each(function (card) {
-          exp += '\n' + card.qty + 'x ' + card.name + ' (' + card.pack + ')'
-        });
-      }
-    });
-    $('#deckload').val(exp);
-  }
-  $('#deckload').on("mouseenter",function () {
-    $(this).qtip({
-      overwrite: false,
-      show: {
-        ready: true
-      },
-      content: {
-        text: 'Paste in a decklist in <a href="http://www.cardgamedb.com">CardGameDB.com</a> format.'
-        //+ '<br><br>Faction should be in the format:<br><em>Faction:<br>&nbsp;&lt;faction&gt;</em>'
-        //+ '<br><br>Cards should be in the format:<br><em>3x &lt;card name&gt; (&lt;Card Set&gt;)</em>'
-        //+ '<br><br>Agenda listed as a standard card e.g. <em>1x Fealty (Core Set)</em>'
-      },
-      style: {
-        classes: 'qtip-bootstrap',
-        tip: false,
-        width: 500
-      },
-      position: {
-        my: 'left-center',
-        at: 'right-center'
-      },
-      hide:  {
-        //event: 'unfocus'
-      }
-    });
-  });
-  $('#loaddeck').on('click',function () {
-  // Create decklist from cards
-    var str = $('#deckload').val();
-    var crd;
-    
-    decklist().remove();
-    
-    var res = str.match(/(.+)/g);
-    // Deck Name
-    $('#deck-name').val(res[0]);
-    
-    var regex = /([0-9])x\s(.+)\s\((.+)\)/g;
-    var res = str.match(regex);
-        
-    $.each(res, function (id, item) {
-      item.match(regex);
-      var qty = parseInt(RegExp.$1, 10);
-      crd = _cards({"name":RegExp.$2,"pack":RegExp.$3}).first();
-      crd.qty = qty;
-      
-      //decklist.insert(crd);
-      updateDeck(crd.code,qty);
-    });
-    console.log('Deck Loaded');
-    console.log (decklist);
-    
-    updateTableBody();
-    writeDeck();
-    
-    newGame();
-  });
-  */
-  
   // Form Validation
   (function() {
     'use strict';
