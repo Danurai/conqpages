@@ -8,101 +8,47 @@
     [dansite.database :as db :refer [get-user-decks get-user-deck]]
     [dansite.tools :as tools :refer [cardfilter]]))
     
-
-(load "pages/admin")
-(load "pages/search")
-
 (defn get-card-from-code [code] (->> misc/cards :data (filter #(= (:code %) code)) first))
 
-(defn cardpage [code]
-  (h/html5 
-    misc/pretty-head
-    [:body
-      (misc/navbar nil)
-      [:div.container.my-2
-        ((fn [r]
-          (let [code-card (Integer/parseInt (:code r))
-               card-next (get-card-from-code (format "%06d" (inc code-card)))
-               card-prev (get-card-from-code (format "%06d" (dec code-card)))]
-            [:div.col
-              [:div.row-fluid.d-flex.justify-content-between.my-3
-                [:span
-                  [:a.btn.btn-outline-secondary {:href (str "/card/" (:code card-prev)) :hidden (nil? card-prev)} (:name card-prev)]]
-                [:span 
-                  [:a.btn.btn-outline-secondary {:href (str "/pack/" (:pack_code r))} (:pack r)]]
-                [:span 
-                  [:a.btn.btn-outline-secondary {:href (str "/card/" (:code card-next)) :hidden (nil? card-next)} (:name card-next)]]]
-              [:div.row
-                [:div.col-sm
-                  [:div.card  
-                    [:div.card-header [:h2 (if (:unique r) [:img.unique-icon.mr-1 {:src "/img/skull.png"}]) (:name r)]]
-                    [:div.card-body (:text r)]
-                    [:div.card-footer.text-muted.d-flex.justify-content-between
-                      [:span (:faction r)]
-                      [:span (str (:pack r) " #" (-> r :position Integer.))]]]]
-                [:div.col-sm
-                  [:img {:src (:img r) :alt (:name r)}]]]]))
-        (get-card-from-code code))]]))
-
-(defn- icon-svg [faction_code]
-  [:svg.icon-faction.align-bottom {:class faction_code :xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 200 200"}
-    [:path {:d ((keyword faction_code) misc/svg)}]])
-
-(defn get-card [code]
-  (assoc
-    (->> misc/cards  
-        :data 
-        (filter #(= (:code %) (key code)))
-        first)
-    :qty (val code)))
-    
 (defn- deck-card-list-by-type [type_code cards-in-deck]
   (let [cid-by-type (filter #(= (:type_code %) type_code) cards-in-deck)]
     [:div
       [:div [:b (str (-> cid-by-type first :type) " (" (->> cid-by-type (map :qty) (reduce +)) ")")]]
       (map (fn [r] 
             [:div (str (:qty r) "x ")
-              [:a.card-tooltip {:href"#" :data-code (:code r) :class (:faction_code r)} (:name r)]
+              [:a.card-tooltip {:href"#" :data-code (:code r) :class (:faction_code r)} (if (:unique r) [:i.fas.fa-skull.fa-xs.mr-1]) (:name r)]
               (if (= (:signature_loyal r) "Signature") [:i.fa.fa-sm.fa-cog.ml-1.icon-sig])
               (if (= (:signature_loyal r) "Loyal") [:i.fa.fa.sm.fa-cog.ml-1.icon-loyal])
             ]) cid-by-type)]))
-        
-(defn- deck-card [deck]
-  (let [cards-in-deck (map #(get-card %) (-> deck :data json/read-str))
-        warlord     (->> cards-in-deck (filter #(= (:type_code %) "warlord_unit")) first)]
-    [:div.card 
-      [:div.px-3.py-1 {:data-toggle "collapse" :data-target (str "#" (:uid deck))}
-        [:div.row
-          [:div.col-sm-9
-            [:div.h5.mt-2 (:name deck)]
-            [:div.text-muted (:name warlord)]
-            [:div
-              (map (fn [x] [:a.badge.badge-secondary.text-light.mr-1 x]) (re-seq #"\w+" (:tags deck)))]]
-          [:div.col-sm-3.d-none.d-sm-block
-            [:div.warlord-thumb.ml-auto.border.border-secondary.rounded {:style (str "background-image: url(" (:img warlord) ");")}]]]]
-      [:div.collapse.px-3.py-1 {:data-parent "#accordian" :id (:uid deck)}
-        ; Decklist
-        [:div.row
-          [:div.col-sm-12
-            [:div.text-muted (str "Cards " (->> cards-in-deck (filter #(not= "warlord_unit" (:type_code %))) (map :qty) (reduce +)) "/50")]]]
-        [:div.row.mb-2
-          [:div.col-sm-6 
-            (deck-card-list-by-type "army_unit" cards-in-deck)]
-          [:div.col-sm-6
-            (deck-card-list-by-type "attachment" cards-in-deck)
-            (deck-card-list-by-type "event" cards-in-deck)
-            (deck-card-list-by-type "support" cards-in-deck)
-            ]]
-        [:div.row.mb-2
-          [:div.small.col-sm-12.text-muted (str "Created on " (-> deck :created c/from-long))]
-          [:div.small.col-sm-12.text-muted (str "Updated on " (-> deck :updated c/from-long))]]
-        [:div.row.mb-2
-          [:div.col-sm-12
-            [:a.btn.btn-sm.btn-primary.mr-1 {:href (str "/decks/edit/" (:uid deck))} [:i.fas.fa-edit.mr-1] "Edit"]
-            [:button.btn.btn-sm.btn-danger.btn-delete.mr-1 {:data-deckuid (:uid deck) :data-deckname (:name deck)} [:i.fas.fa-times.mr-1] "Delete"]
-            [:button.btn.btn-sm.btn-outline-secondary.btn-export {:type "button" :data-toggle "modal" :data-target "#exportdeck" :data-deckid (:uid deck)} "Export"]]]
-        ]]))
 
+(load "pages/admin")
+(load "pages/search")
+(load "pages/cardpage")
+(load "pages/decklist")
+;(load "pages/deckbuilder")
+
+
+(defn- icon-svg [faction_code]
+  [:svg.icon-faction.align-bottom {:class faction_code :xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 200 200"}
+    [:path {:d ((keyword faction_code) misc/svg)}]])
+    
+    
+(defn- get-deck-data
+  ; id is numeric 5 digits - new deck
+  ; id is alphanumeric 6 digits - existing deck
+  ; TODO req contains deckdata - load deck POSTed
+  [req]
+  (if (some? (re-matches #"/decks/new/[0-9]{6}" (-> req :uri)))
+      {:data (-> req :params :id misc/signature-squad-decklist json/write-str)
+       :tags (-> req :params :id misc/faction-code)}
+      (let [deck (get-user-deck (-> req :params :id))]
+        (if (some? deck)
+            deck
+            (if (some? (-> req :params :deck))
+              (let [deck (json/read-str (-> req :params :deck) :key-fn keyword)]
+                (assoc deck :data (-> deck :data json/write-str)))
+              {})))))
+            
 (defn home [req]
   (h/html5 
     misc/pretty-head
@@ -114,69 +60,40 @@
           [:li [:span.h5 "Cards: "] "View or search cards"]
           [:li [:span.h5 "Collection: "] "Browse collection in virtual folders"]
           [:li [:span.h5 "Litmus: "] "Test decks"]
-          ]]]))
+        ]]]))
         
-(defn decklist [req]
-  (let [user-decks (db/get-user-decks (-> req misc/get-authentications :uid))]
+(defn deckviewer [req]
+  (let [deck        (get-deck-data req)
+       cards-in-deck (map #(-> (key %) get-card-from-code (assoc :qty (val %))) (-> deck :data json/read-str))
+       warlord      (->> cards-in-deck (filter #(= (:type_code %) "warlord_unit")) first)]
     (h/html5
       misc/pretty-head
-      (h/include-js "/js/whk_deck_list.js")
-      (h/include-js "/js/whk_qtip.js")
-      [:body
+      (h/include-js "/js/whk_deck_view.js")
+      [:body 
         (misc/navbar req)
         [:div.container.my-2
-          (misc/show-alert)
           [:div.row
-            [:div.col-md-8
-              [:div.mb-2
-                [:span.h3.mr-2 "Your Army Roster"]
-                [:span (str "(" (count user-decks) ")")]]
-              [:div#roster.accordian
-                (map #(deck-card %) user-decks)]]
-            [:div.col-md-4
-              [:a.btn.btn-primary.m-2 {:href "/decks/new"} "New Deck"]
-              [:button.btn.btn-warning.m-2 {:data-toggle "modal" :data-target "#loaddeck"} "Import Deck"]]]]
-        [:div#deletedeck.modal {:role "dialog"}
-          [:div.modal-dialog {:role "document"}
-            [:div.modal-content 
-              [:div.modal-header  "Delete Deck"
-                [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-                  [:span {:aria-hidden "true"} "&times;"]]]
-              [:div#deletealert.modal-body]
-              [:div.modal-footer
-                [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]
-                [:form {:action "/decks/delete" :method "post"}
-                  [:input#deletedeckuid {:name "deletedeckuid" :hidden true}]
-                  [:button.btn.btn-danger {:type "submit" } "Delete"]]]]]]
-        [:div#loaddeck.modal {:role "dialog"}
-          [:div.modal-dialog.modal-lg {:role "document"}
-            [:div.modal-content
-              [:div.modal-header "Load Deck"
-                [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-                  [:span {:aria-hidden "true"} "x"]]]
-              [:div.modal-body
-                [:div.container-fluid
-                  [:div.row
-                    [:div.col-sm-6 
-                      [:div "Paste Decklist below"]
-                      [:textarea#importdecklist.form-control {:rows "10"}]]
-                    [:div.col-sm-6
-                      [:div#parseddecklist.border.border-secondary {:style "overflow-y:scroll;height:280px;white-space:pre-wrap;"}]]]]]
-              [:div.modal-footer
-                [:form {:action "/decks/new/" :method "post"}
-                  [:input#deckjson {:hidden true :name "deck"}]
-                  [:button.btn.btn-primary {:type "submit"} "Load Deck"]]
-                [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]
-        [:div#exportdeck.modal {:role "dialog"}
-          [:div.modal-dialog {:role "document"}
-            [:div.modal-content
-              [:div.modal-header "Export Deck"
-                [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-                  [:span {:aria-hidden "true"} "x"]]]
-              [:div.modal-body 
-                [:textarea.form-control {:rows "10"}]]
-              [:div.modal-footer
-                [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]])))
+            [:div.col-sm-8.offset-md-2
+              [:div.row
+                [:div.col-sm-12 
+                  [:div.h2.my-1 (:name deck)]
+                  [:a.h4.card-tooltip {:data-code (:code warlord) :href "#"} [:i.fas.fa-skull.fa-xs.mr-2] (:name warlord)]
+                  [:input#deckcards {:type "text" :hidden true :value (:data deck)}]]]
+              ; Decklist
+              [:div.row
+                [:div.col-sm-12
+                  [:div.text-muted (str "Cards " (->> cards-in-deck (filter #(not= "warlord_unit" (:type_code %))) (map :qty) (reduce +)) "/50")]]]
+              [:div.row.mb-2
+                [:div.col-sm-6 
+                  (deck-card-list-by-type "army_unit" cards-in-deck)]
+                [:div.col-sm-6
+                  (deck-card-list-by-type "attachment" cards-in-deck)
+                  (deck-card-list-by-type "event" cards-in-deck)
+                  (deck-card-list-by-type "support" cards-in-deck)
+                  ]]
+              [:div.row.mb-2
+                [:div.small.col-sm-12.text-muted (str "Created on " (-> deck :created c/from-long))]
+                [:div.small.col-sm-12.text-muted (str "Updated on " (-> deck :updated c/from-long))]]]]]])))
 
 (defn newdeck [req]
   (h/html5
@@ -198,21 +115,6 @@
           [:div.col-sm-4.d-none.d-sm-block
             [:div#warlordcards.row.sticky-top]]]]]))
 
-(defn get-deck-data
-  ; id is numeric 5 digits - new deck
-  ; id is alphanumeric 6 digits - existing deck
-  ; TODO req contains deckdata - load deck POSTed
-  [req]
-  (if (some? (re-matches #"/decks/new/[0-9]{6}" (-> req :uri)))
-      {:data (-> req :params :id misc/signature-squad-decklist json/write-str)
-       :tags (-> req :params :id misc/faction-code)}
-      (let [deck (get-user-deck (-> req :params :id))]
-        (if (some? deck)
-            deck
-            (if (some? (-> req :params :deck))
-              (let [deck (json/read-str (-> req :params :deck) :key-fn keyword)]
-                (assoc deck :data (-> deck :data json/write-str)))
-              {})))))
             
 (defn deckbuilder [req]
   (let [deck (get-deck-data req)]

@@ -34,6 +34,8 @@
           
   (GET "/" []
     pages/decklist)
+  (GET "/view/:id" [] 
+    pages/deckviewer)
   (GET "/new" []
     pages/newdeck)
   (ANY "/new/" []

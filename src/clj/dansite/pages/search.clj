@@ -3,6 +3,7 @@
 (defn findcards [q]
   (h/html5
     misc/pretty-head
+    (h/include-js "/js/whk_cards.js")
     [:body
       (misc/navbar nil)
       [:div.container.my-2
